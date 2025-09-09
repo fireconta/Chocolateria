@@ -1,10 +1,20 @@
-// Lista de caminhos dos vídeos na pasta Videos
-const videos = [
-  'Videos/Video01.mp4',
-  'Videos/Video02.mp4',
-  'Videos/Video03.mp4',
-  'Videos/Video04.mp4'
-];
+// Configurações
+const config = {
+  pix: {
+    pixKey: "sua-chave-pix-aqui@example.com",
+    pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix"
+  },
+  videos: [
+    'Videos/Video01.mp4',
+    'Videos/Video02.mp4',
+    'Videos/Video03.mp4',
+    'Videos/Video04.mp4'
+  ],
+  images: {
+    logo: 'imagens/logoluci.png',
+    brigadeiro: 'imagens/imagem2.jpeg'
+  }
+};
 
 // Granulado animado
 function setupSprinkles() {
@@ -33,7 +43,7 @@ function setHeroVideo() {
     toast('Erro ao carregar o vídeo principal');
     return;
   }
-  heroVideo.src = videos[0]; // Usa Video01.mp4 para o hero
+  heroVideo.src = config.videos[0]; // Usa Video01.mp4 para o hero
   const videoElement = heroVideo.parentElement;
   videoElement.load(); // Recarrega o vídeo
 
@@ -69,7 +79,7 @@ function setupVideoGallery() {
     console.error('Video gallery container not found');
     return;
   }
-  videos.slice(1).forEach((videoSrc, index) => {
+  config.videos.slice(1).forEach((videoSrc, index) => {
     const videoCard = document.createElement('div');
     videoCard.className = 'video-card';
     const videoId = `gallery-video-${index}`;
@@ -155,7 +165,7 @@ function setupVideoObserver() {
         video.setAttribute('data-muted', 'true');
         if (button) {
           button.textContent = '🔇';
-          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
+          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
         }
       }
     });
@@ -176,10 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
   checkLocation(); // Inicializa o estado do campo de CEP
   startTimer(); // Inicia o temporizador
 });
-
-// Configurações de Pix
-const pixKey = "sua-chave-pix-aqui@example.com";
-const pixQrCodeUrl = "https://placehold.co/200x200?text=QR+Code+Pix";
 
 // Funções utilitárias
 function scrollToEl(sel) {
@@ -307,14 +313,14 @@ function checkout() {
   const confirmationModal = document.getElementById('confirmation-modal');
   if (orderSummary && pixKeyText && confirmationModal) {
     orderSummary.innerHTML = summary;
-    pixKeyText.textContent = pixKey;
+    pixKeyText.textContent = config.pix.pixKey;
     confirmationModal.classList.add('show');
   }
 }
 
 // Copiar Chave Pix
 function copyPixKey() {
-  navigator.clipboard.writeText(pixKey).then(() => {
+  navigator.clipboard.writeText(config.pix.pixKey).then(() => {
     toast('Chave Pix copiada!');
   }).catch(() => {
     toast('Erro ao copiar a chave Pix');
