@@ -12,7 +12,7 @@ const config = {
   ],
   images: {
     logo: 'Imagens/Logoluci.png',
-    brigadeiro: 'Imagens/Imagem2.jpeg'
+    brigadeiro: 'Imagens/Imagem02.jpeg'
   }
 };
 
@@ -110,13 +110,46 @@ function setupVideoGallery() {
     videoCard.className = 'video-card';
     const videoId = `gallery-video-${index}`;
     videoCard.innerHTML = `
-      <video autoplay loop playsinline muted id="${videoId}">
+      <video autoplay loop playsinline muted id="${videoId}" data-muted="true">
         <source src="${videoSrc}" type="video/mp4">
       </video>
+      <button class="btn audio-btn" data-video-id="${videoId}" aria-controls="${videoId}" onclick="toggleAudio('${videoId}')" aria-label="Ativar áudio do vídeo ${index + 2}">🔇</button>
       <p class="mini muted">Vídeo ${index + 2}</p>
     `;
     gallery.appendChild(videoCard);
   });
+}
+
+// Alternar áudio do vídeo
+function toggleAudio(videoId) {
+  const video = document.getElementById(videoId);
+  const button = document.querySelector(`[data-video-id="${videoId}"]`);
+  if (!video || !button) {
+    console.error(`Video or button not found for ID: ${videoId}`);
+    return;
+  }
+
+  const isMuted = video.getAttribute('data-muted') === 'true';
+
+  // Desmutar todos os outros vídeos
+  document.querySelectorAll('video').forEach(v => {
+    if (v.id !== videoId) {
+      v.muted = true;
+      v.setAttribute('data-muted', 'true');
+      const btn = document.querySelector(`[data-video-id="${v.id}"]`);
+      if (btn) {
+        btn.textContent = '🔇';
+        btn.setAttribute('aria-label', `Ativar áudio do vídeo ${v.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
+      }
+    }
+  });
+
+  // Alternar o estado do vídeo atual
+  video.muted = !isMuted;
+  video.setAttribute('data-muted', !isMuted);
+  button.textContent = isMuted ? '🔊' : '🔇';
+  button.setAttribute('aria-label', `${isMuted ? 'Desativar' : 'Ativar'} áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]}`);
+  toast(`Áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]} ${isMuted ? 'ativado' : 'desativado'}`);
 }
 
 // Configurar Intersection Observer para pausar/reproduzir vídeos
@@ -128,12 +161,38 @@ function setupVideoObserver() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const video = entry.target;
+      const button = document.querySelector(`[data-video-id="${video.id}"]`);
       if (entry.isIntersecting) {
-        // Reproduzir vídeo visível
+        // Reproduzir vídeo visível e ativar áudio
         video.play().catch(e => console.error(`Play failed for ${video.id}:`, e));
+        document.querySelectorAll('video').forEach(v => {
+          if (v.id !== video.id) {
+            v.muted = true;
+            v.setAttribute('data-muted', 'true');
+            v.pause(); // Pausar vídeos não visíveis
+            const btn = document.querySelector(`[data-video-id="${v.id}"]`);
+            if (btn) {
+              btn.textContent = '🔇';
+              btn.setAttribute('aria-label', `Ativar áudio do vídeo ${v.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
+            }
+          }
+        });
+        video.muted = false;
+        video.setAttribute('data-muted', 'false');
+        if (button) {
+          button.textContent = '🔊';
+          button.setAttribute('aria-label', `Desativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
+          toast(`Áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]} ativado automaticamente`);
+        }
       } else {
         // Pausar vídeo fora da tela
         video.pause();
+        video.muted = true;
+        video.setAttribute('data-muted', 'true');
+        if (button) {
+          button.textContent = '🔇';
+          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
+        }
       }
     });
   }, {
