@@ -11,8 +11,8 @@ const config = {
     'Videos/Video04.mp4'
   ],
   images: {
-    logo: 'Imagens/logoluci.png',
-    brigadeiro: 'Imagens/imagem2.jpeg'
+    logo: 'Imagens/Logoluci.png',
+    brigadeiro: 'Imagens/Imagem2.jpeg'
   }
 };
 
