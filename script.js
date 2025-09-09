@@ -220,7 +220,7 @@ function setupVideoObserver() {
         video.setAttribute('data-muted', 'true');
         if (button) {
           button.textContent = '🔇';
-          button.setAttribute('aria-label', `Ativar áudio do vídeo ${v.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
+          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
         }
       }
     });
@@ -252,7 +252,6 @@ function openDataModal() {
   const dataModal = document.getElementById('data-modal');
   if (dataModal) {
     dataModal.classList.add('show');
-    // Preencher campos com dados existentes, se houver
     document.getElementById('data-cep').value = state.address.cep || '';
     document.getElementById('data-street').value = state.address.street || '';
     document.getElementById('data-number').value = state.address.number || '';
@@ -459,11 +458,18 @@ function checkUrlForGroupCode() {
 // Validação de Data
 function validateDate() {
   const dateInput = document.getElementById('date');
-  if (!dateInput || !dateInput.value) {
+  if (!dateInput) {
+    console.error('Campo de data (#date) não encontrado');
+    toast('Erro interno: campo de data não encontrado.');
+    return false;
+  }
+  const selectedDateStr = dateInput.value;
+  if (!selectedDateStr) {
+    console.warn('Nenhuma data selecionada');
     toast('Selecione a data de entrega!');
     return false;
   }
-  const selectedDate = new Date(dateInput.value);
+  const selectedDate = new Date(selectedDateStr);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentHour = now.getHours();
@@ -476,9 +482,11 @@ function validateDate() {
   // Normalizar selectedDate para comparar apenas a data
   selectedDate.setHours(0, 0, 0, 0);
   
+  console.log(`Validando data: ${selectedDateStr} (Selecionada: ${selectedDate.toLocaleDateString('pt-BR')}, Mínima: ${minDate.toLocaleDateString('pt-BR')})`);
+  
   // Proibir datas anteriores à mínima
   if (selectedDate < minDate) {
-    toast('Selecione uma data futura!');
+    toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')}.`);
     dateInput.value = '';
     return false;
   }
@@ -491,6 +499,40 @@ function validateDate() {
   }
   
   return true;
+}
+
+// Configurar data mínima
+function updateDateInput() {
+  const dateInput = document.getElementById('date');
+  if (!dateInput) {
+    console.error('Campo de data (#date) não encontrado');
+    toast('Erro interno: campo de data não encontrado.');
+    return;
+  }
+  const now = new Date();
+  const currentHour = now.getHours();
+  const minDate = new Date();
+  // Normalizar para 00:00:00
+  minDate.setHours(0, 0, 0, 0);
+  // Se após 16h, definir data mínima como amanhã
+  if (currentHour >= config.delivery.cutoffHour) {
+    minDate.setDate(minDate.getDate() + 1);
+  }
+  // Formatar como YYYY-MM-DD
+  const minDateStr = minDate.toISOString().split('T')[0];
+  dateInput.min = minDateStr;
+  console.log(`Data mínima definida: ${minDateStr} (Horário atual: ${now.toLocaleString('pt-BR')})`);
+  
+  // Limpar valor se for anterior à data mínima
+  if (dateInput.value) {
+    const selectedDate = new Date(dateInput.value);
+    selectedDate.setHours(0, 0, 0, 0);
+    if (selectedDate < minDate) {
+      console.warn(`Data selecionada (${dateInput.value}) é anterior à mínima (${minDateStr})`);
+      dateInput.value = '';
+      toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')}.`);
+    }
+  }
 }
 
 // Validação de Endereço
@@ -572,7 +614,6 @@ function checkout() {
     dataModal.classList.remove('show');
     confirmationModal.classList.add('show');
     toast('🚚 Dados confirmados! Prossiga para o pagamento.');
-    // Limpar campos após checkout
     document.getElementById('data-number').value = '';
     document.getElementById('data-whatsapp').value = '';
     document.getElementById('data-name').value = '';
@@ -589,32 +630,6 @@ function copyPixKey() {
   }).catch(() => {
     toast('Erro ao copiar a chave Pix');
   });
-}
-
-// Configurar data mínima
-function updateDateInput() {
-  const dateInput = document.getElementById('date');
-  if (!dateInput) return;
-  const now = new Date();
-  const currentHour = now.getHours();
-  const minDate = new Date();
-  // Normalizar para 00:00:00
-  minDate.setHours(0, 0, 0, 0);
-  // Se após 16h, definir data mínima como amanhã
-  if (currentHour >= config.delivery.cutoffHour) {
-    minDate.setDate(now.getDate() + 1);
-  }
-  // Formatar como YYYY-MM-DD
-  dateInput.min = minDate.toISOString().split('T')[0];
-  // Limpar valor se for anterior à data mínima
-  if (dateInput.value) {
-    const selectedDate = new Date(dateInput.value);
-    selectedDate.setHours(0, 0, 0, 0);
-    if (selectedDate < minDate) {
-      dateInput.value = '';
-      toast('Data inválida selecionada! Escolha uma data válida.');
-    }
-  }
 }
 
 // Inicialização
