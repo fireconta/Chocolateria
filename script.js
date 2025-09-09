@@ -220,7 +220,7 @@ function setupVideoObserver() {
         video.setAttribute('data-muted', 'true');
         if (button) {
           button.textContent = '🔇';
-          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
+          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
         }
       }
     });
@@ -234,14 +234,8 @@ function setupVideoObserver() {
 // Abrir modal de dados
 function openDataModal() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
-  const data = document.getElementById('date')?.value;
   if (!sabor) {
     toast('Selecione um sabor antes de continuar! 🍫');
-    scrollToEl('#comprar');
-    return;
-  }
-  if (!data || !validateDate()) {
-    toast('Selecione uma data de entrega válida (a partir de 09/09/2025)! 📅');
     scrollToEl('#comprar');
     return;
   }
@@ -252,6 +246,7 @@ function openDataModal() {
   const dataModal = document.getElementById('data-modal');
   if (dataModal) {
     dataModal.classList.add('show');
+    document.getElementById('date').value = '';
     document.getElementById('data-cep').value = state.address.cep || '';
     document.getElementById('data-street').value = state.address.street || '';
     document.getElementById('data-number').value = state.address.number || '';
@@ -261,6 +256,7 @@ function openDataModal() {
     document.getElementById('data-whatsapp').value = state.whatsapp || '';
     document.getElementById('data-name').value = state.name || '';
     document.getElementById('data-address-input').style.display = state.address.cep ? 'block' : 'none';
+    updateDateInput(); // Configura data mínima no modal
   }
 }
 
@@ -312,6 +308,7 @@ async function fetchAddress() {
 
 // Confirmar dados do modal
 function confirmData() {
+  if (!validateDate()) return;
   const numberInput = document.getElementById('data-number');
   if (numberInput) {
     state.address.number = numberInput.value.trim();
@@ -524,176 +521,4 @@ function updateDateInput() {
       dateInput.focus();
       return;
     }
-    selectedDate.setHours(0, 0, 0, 0);
-    if (selectedDate < today) {
-      console.warn(`Data selecionada (${dateInput.value}) é anterior à mínima (${minDateStr})`);
-      toast(`Data inválida! Escolha a partir de ${today.toLocaleDateString('pt-BR')} 📅`);
-      dateInput.value = '';
-      dateInput.focus();
-    }
-  }
-}
-
-// Validação de Endereço
-function validateAddress() {
-  if (!state.address.cep || !state.address.street || !state.address.number || !state.address.neighborhood || !state.address.city || !state.address.state) {
-    toast('Endereço incompleto! Busque o CEP e insira o número. 📍');
-    return false;
-  }
-  return true;
-}
-
-// Validação de WhatsApp
-function validateWhatsApp() {
-  const whatsappInput = document.getElementById('data-whatsapp');
-  if (!whatsappInput) return false;
-  const whatsapp = whatsappInput.value.replace(/\D/g, '');
-  const whatsappRegex = /^\d{10,11}$/;
-  if (!whatsappRegex.test(whatsapp)) {
-    toast('Número de WhatsApp inválido! Use o formato (XX) 91234-5678 📱');
-    return false;
-  }
-  state.whatsapp = whatsapp;
-  return true;
-}
-
-// Validação de Nome Completo
-function validateName() {
-  const nameInput = document.getElementById('data-name');
-  if (!nameInput) return false;
-  const name = nameInput.value.trim();
-  const nameRegex = /^[A-Za-z\s]{3,}$/;
-  if (!nameRegex.test(name)) {
-    toast('Nome completo inválido! Use pelo menos 3 letras. 😊');
-    return false;
-  }
-  state.name = name;
-  return true;
-}
-
-// Checkout
-function checkout() {
-  const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
-  const data = document.getElementById('date')?.value;
-  let preco = config.pricing.basePrice;
-  const groupCode = state.group.groupCode || '';
-
-  // Aplicar descontos
-  let discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
-  preco = preco * (1 - config.pricing.standardDiscount); // 10% OFF padrão
-  let groupDiscountApplied = false;
-  if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
-    preco = preco * (1 - config.share.groupDiscountRate); // 10% OFF extra
-    groupDiscountApplied = true;
-    discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% OFF extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
-  }
-
-  // Resumo do pedido
-  const summary = `
-    <strong>Resumo do Pedido:</strong><br>
-    • Sabor: ${sabor}<br>
-    • Nome: ${state.name}<br>
-    • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}<br>
-    • Frete: Grátis (filial a 2,7 km)<br>
-    • Data de Entrega: ${new Date(data).toLocaleDateString('pt-BR')}<br>
-    • WhatsApp: ${state.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}<br>
-    • Preço: R$ ${preco.toFixed(2).replace('.', ',')}<br>
-    ${groupCode ? '• Código do Grupo: ' + groupCode + '<br>' : ''}
-    • <strong>${discountText}</strong><br>
-    • <strong class="highlight">Feito sob encomenda após pagamento!</strong>
-  `;
-  
-  const orderSummary = document.getElementById('order-summary');
-  const pixKeyText = document.getElementById('pix-key-text');
-  const confirmationModal = document.getElementById('confirmation-modal');
-  const dataModal = document.getElementById('data-modal');
-  if (orderSummary && pixKeyText && confirmationModal && dataModal) {
-    orderSummary.innerHTML = summary;
-    pixKeyText.textContent = config.pix.pixKey;
-    dataModal.classList.remove('show');
-    confirmationModal.classList.add('show');
-    toast('🚚 Dados confirmados! Prossiga para o pagamento. 💸');
-    document.getElementById('data-number').value = '';
-    document.getElementById('data-whatsapp').value = '';
-    document.getElementById('data-name').value = '';
-    state.address.number = '';
-    state.whatsapp = '';
-    state.name = '';
-  }
-}
-
-// Copiar Chave Pix
-function copyPixKey() {
-  navigator.clipboard.writeText(config.pix.pixKey).then(() => {
-    toast('Chave Pix copiada! 💸');
-  }).catch(() => {
-    toast('Erro ao copiar a chave Pix 😕');
-  });
-}
-
-// Inicialização
-document.addEventListener('DOMContentLoaded', () => {
-  checkImageLoad();
-  setupSprinkles();
-  setHeroVideo();
-  setupVideoGallery();
-  setupVideoObserver();
-  startTimer();
-  checkUrlForGroupCode();
-  updateDateInput();
-});
-
-// Funções utilitárias
-function scrollToEl(sel) {
-  const el = document.querySelector(sel);
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
-}
-
-function toast(text) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = text;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) modal.classList.remove('show');
-}
-
-// Temporizador
-function startTimer() {
-  let time = 10 * 60;
-  const timerEl = document.getElementById('timer');
-  if (!timerEl) return;
-  const interval = setInterval(() => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    time--;
-    if (time < 0) {
-      time = 10 * 60;
-      toast('Oferta renovada por mais 10 minutos! ⏳');
-    }
-  }, 1000);
-}
-
-// Controle de estoque
-let stockCount = 5;
-const stockEl = document.getElementById('stock-alert');
-if (stockEl) {
-  setInterval(() => {
-    if (stockCount > 0) {
-      stockCount--;
-      stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
-      if (stockCount === 0) {
-        setTimeout(() => {
-          stockCount = 5;
-          stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
-          toast('Estoque reposto! Garanta o seu agora! 🎉');
-        }, 5000);
-      }
-    }
-  }, 15000);
-}
+    selectedDate.setHours(0,
