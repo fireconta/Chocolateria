@@ -231,6 +231,20 @@ function setupVideoObserver() {
   document.querySelectorAll('video').forEach(video => observer.observe(video));
 }
 
+// Autoformatação do WhatsApp
+function formatWhatsApp(input) {
+  let value = input.value.replace(/\D/g, '');
+  if (value.length > 11) value = value.slice(0, 11);
+  
+  if (value.length <= 2) {
+    input.value = value;
+  } else if (value.length <= 7) {
+    input.value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+  } else {
+    input.value = `(${value.slice(0, 2)}) ${value.slice(2, value.length - 4)}-${value.slice(-4)}`;
+  }
+}
+
 // Abrir modal de dados
 function openDataModal() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
@@ -257,6 +271,12 @@ function openDataModal() {
     document.getElementById('data-name').value = state.name || '';
     document.getElementById('data-address-input').style.display = state.address.cep ? 'block' : 'none';
     updateDateInput(); // Configura data mínima no modal
+
+    // Adicionar listener para formatação do WhatsApp
+    const whatsappInput = document.getElementById('data-whatsapp');
+    if (whatsappInput) {
+      whatsappInput.addEventListener('input', () => formatWhatsApp(whatsappInput));
+    }
   }
 }
 
@@ -547,9 +567,12 @@ function validateWhatsApp() {
   const whatsapp = whatsappInput.value.replace(/\D/g, '');
   const whatsappRegex = /^\d{10,11}$/;
   if (!whatsappRegex.test(whatsapp)) {
-    toast('Número de WhatsApp inválido! Use o formato (XX) 91234-5678 📱');
+    toast('Número de WhatsApp inválido! Use o formato (XX) XXXXX-XXXX 📱');
+    whatsappInput.classList.add('invalid');
+    whatsappInput.focus();
     return false;
   }
+  whatsappInput.classList.remove('invalid');
   state.whatsapp = whatsapp;
   return true;
 }
