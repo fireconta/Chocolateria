@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brigadeiro Gigante – Chocolatria</title>
-  <meta name="description" content="Brigadeiro gigante artesanal – edição limitada. Inspirado em campanhas premium, feito pela Chocolatria." />
+  <meta name="description" content="Brigadeiro gigante artesanal – edição limitada. Feito sob encomenda, entregue na sua casa!" />
   <style>
     :root {
       --bg: #0f0b07;
@@ -23,7 +23,7 @@
     .container { max-width: 1120px; margin: 0 auto; padding: 0 5%; }
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: clamp(12px, 3vw, 16px) clamp(20px, 4vw, 24px); border: none; border-radius: 999px;
-      background: linear-gradient(135deg, var(--gold), #e6c78a); color: #2b211a; font-weight: 700; font-size: clamp(1rem, 2.5vw, 1.1rem); cursor: pointer;
+      background: linear-gradient(135deg, var(--gold), #e6c78a); color: #2b211a; font-weight: 700; font-size: clamp(1rem, 2.5vw, 1.2rem); cursor: pointer;
       transition: transform 0.2s ease, filter 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 8px 20px rgba(0,0,0,0.4); animation: pulse 2s infinite;
     }
     .btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
@@ -59,20 +59,19 @@
     .section { padding: clamp(40px, 8vw, 60px) 0; border-top: 1px solid rgba(255,255,255,0.06); background: linear-gradient(180deg, transparent, rgba(255,255,255,0.02)); }
     .grid { display: grid; gap: clamp(60px, 8vw, 80px); }
     @media (min-width: 900px) { 
-      .grid.cols-3 { grid-template-columns: repeat(3, 1fr); } 
       .grid.cols-2 { grid-template-columns: repeat(2, 1fr); } 
     }
     @media (min-width: 600px) and (max-width: 899px) {
       .heroInner { grid-template-columns: 1fr; }
       .hero-video { max-width: clamp(50%, 20vw, 60%); max-height: clamp(50%, 20vw, 60%); margin: 0 auto; }
       .imgWrap { margin-top: 20px; }
-      .grid.cols-3 { grid-template-columns: repeat(2, 1fr); }
+      .grid.cols-2 { grid-template-columns: 1fr; }
     }
     @media (max-width: 599px) {
       .heroInner { grid-template-columns: 1fr; }
       .hero-video { max-width: clamp(60%, 25vw, 70%); max-height: clamp(60%, 25vw, 70%); margin: 0 auto; }
       .imgWrap { margin-top: 20px; }
-      .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr; }
+      .grid.cols-2 { grid-template-columns: 1fr; }
     }
     .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: clamp(16px, 3vw, 22px); box-shadow: 0 12px 30px rgba(0,0,0,0.35); }
     .badge { display: inline-block; background: rgba(213,178,110,0.18); border: 1px solid rgba(213,178,110,0.35); color: var(--gold); padding: 6px 10px; border-radius: 999px; font-size: clamp(0.7rem, 1.8vw, 0.8rem); font-weight: 700; letter-spacing: 0.04em; }
@@ -119,11 +118,13 @@
     .testimonial-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; max-width: clamp(250px, 40%, 300px); text-align: left; }
     .testimonial-card p { margin: 0 0 8px; }
     .testimonial-card .mini { margin-top: 8px; }
-    .stock-alert { color: var(--danger); font-weight: 700; margin: 10px 0; font-size: clamp(0.9rem, 2.5vw, 1.1rem); transition: all 0.4s ease; }
+    .stock-alert { color: var(--danger); font-weight: 700; margin: 10px 0; font-size: clamp(1rem, 2.5vw, 1.2rem); transition: all 0.4s ease; animation: shake 0.5s infinite; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
     .share-modal-content { display: flex; flex-direction: column; gap: 16px; }
-    .share-input { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--cream); padding: 8px 10px; border-radius: 8px; width: 100%; }
-    .address-input { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--cream); padding: 8px 10px; border-radius: 8px; width: clamp(200px, 50vw, 300px); margin: 8px 0; }
+    .share-input, .address-input, .whatsapp-input { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--cream); padding: 8px 10px; border-radius: 8px; width: clamp(200px, 50vw, 300px); margin: 8px 0; }
     .address-label { display: block; text-align: left; font-weight: 700; margin-bottom: 4px; }
+    .highlight { color: var(--gold); font-weight: 900; }
+    .cta-text { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--success); font-weight: 700; margin: 10px 0; }
   </style>
 </head>
 <body>
@@ -137,7 +138,7 @@
         <a href="#sabores" class="mini">Sabores</a>
         <a href="#como-fazer" class="mini">Como funciona</a>
         <a href="#faq" class="mini">FAQ</a>
-        <button class="btn" onclick="scrollToEl('#comprar')">Garanta o Seu!</button>
+        <button class="btn" onclick="scrollToEl('#comprar')">Garanta o Seu! 🚚</button>
       </nav>
     </div>
   </header>
@@ -145,15 +146,15 @@
   <section class="hero">
     <div class="container heroInner">
       <div>
-        <span class="pill">Edição Limitada • Estoque Baixo!</span>
-        <h2 class="headline">Brigadeiro Gigante<br/>Surpreenda com Sabor!</h2>
-        <p class="sub">Casquinha de chocolate belga, recheado com brigadeiro cremoso e granulado premium. Perfeito para festas e presentes!</p>
+        <span class="pill">🔥 Edição Limitada • Estoque Baixo!</span>
+        <h2 class="headline">Brigadeiro Gigante<br/><span class="highlight">Surpreenda com Sabor!</span></h2>
+        <p class="sub">Casquinha de chocolate belga, recheado com brigadeiro cremoso e granulado premium. Feito sob encomenda, entregue na sua casa!</p>
         <div class="stats">
           <div class="stat"><strong>± 1,2 kg</strong><div class="mini muted">Serve 10–12 pessoas</div></div>
           <div class="stat"><strong>72 h</strong><div class="mini muted">Produção artesanal</div></div>
         </div>
         <div style="display:flex;gap:clamp(10px, 2vw, 12px);align-items:center">
-          <button class="btn" onclick="scrollToEl('#comprar')">Garanta o Seu Agora!</button>
+          <button class="btn" onclick="scrollToEl('#comprar')">Garanta o Seu Agora! 🚚</button>
           <button class="btn secondary" onclick="scrollToEl('#sabores')">Ver Sabores</button>
         </div>
         <p class="mini muted" style="margin-top:8px">Fotos e vídeos ilustrativos. Produto artesanal, variações são esperadas.</p>
@@ -178,8 +179,9 @@
   <section class="section" id="comprar">
     <div class="container">
       <div class="card" style="text-align:center;margin-bottom:16px">
-        <p class="stock-alert">Oferta especial: <strong>10% OFF</strong> nas próximas <span id="timer">10:00</span>!</p>
-        <p class="stock-alert">Convide 3+ amigos e ganhe <strong>10% OFF extra</strong> via Pix!</p>
+        <p class="stock-alert">🔥 Oferta especial: <strong>10% OFF (R$ 18,99)</strong> nas próximas <span id="timer">10:00</span>!</p>
+        <p class="stock-alert">Convide 3+ amigos e ganhe <strong>10% OFF extra (R$ 17,09)</strong> via Pix!</p>
+        <p class="cta-text">🚚 Entrega rápida! Brigadeiro feito sob encomenda após pagamento.</p>
       </div>
       <div class="card" style="display:grid;gap:16px">
         <div class="product">
@@ -207,20 +209,9 @@
           </label>
         </div>
         <div class="grid cols-2">
-          <label class="card" style="display:flex;gap:10px;align-items:center">
-            <input type="radio" name="retirada" value="Entrega" checked onchange="checkLocation()" aria-label="Opção de entrega" />
-            <span>Entrega</span>
-          </label>
-          <label class="card" style="display:flex;gap:10px;align-items:center">
-            <input type="radio" name="retirada" value="Retirada" onchange="hideLocationInputs()" aria-label="Opção de retirada" />
-            <span>Retirada</span>
-          </label>
           <div class="card mini" style="grid-column: span 2;">
-            <strong>Data:</strong>
-            <input id="date" type="date" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--cream);padding:8px 10px;border-radius:8px;margin-left:8px;width:clamp(150px, 40vw, 200px)" aria-label="Data de entrega ou retirada" aria-required="true" />
-          </div>
-          <div id="location-message" class="card mini" style="display:none;grid-column:span 2;">
-            <span id="frete-message"></span>
+            <strong>Data de Entrega:</strong>
+            <input id="date" type="date" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--cream);padding:8px 10px;border-radius:8px;margin-left:8px;width:clamp(150px, 40vw, 200px)" aria-label="Data de entrega" aria-required="true" />
           </div>
           <div id="cep-input" class="card mini" style="grid-column:span 2;">
             <strong>Informe seu CEP:</strong>
@@ -239,6 +230,10 @@
             <label class="address-label">Estado:</label>
             <input id="state" type="text" class="address-input" aria-label="Estado" aria-required="true" readonly />
           </div>
+          <div id="whatsapp-input" class="card mini" style="grid-column:span 2;">
+            <strong>Número do WhatsApp:</strong>
+            <input id="whatsapp" type="tel" placeholder="Ex.: (11) 91234-5678" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--cream);padding:8px 10px;border-radius:8px;margin-left:8px;width:clamp(150px, 40vw, 200px)" aria-label="Número do WhatsApp" aria-required="true" />
+          </div>
           <div id="group-input" class="card mini" style="grid-column:span 2;">
             <strong>Código do Grupo (opcional):</strong>
             <input id="group-code" type="text" placeholder="ex.: ABC123" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--cream);padding:8px 10px;border-radius:8px;margin-left:8px;width:clamp(150px, 40vw, 200px)" aria-label="Código do grupo" />
@@ -246,8 +241,8 @@
           </div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center">
-          <button class="btn" onclick="checkout()">Finalizar Pedido</button>
-          <button class="btn secondary" onclick="openShareModal()">Compartilhar</button>
+          <button class="btn" onclick="checkout()">Finalizar Pedido! 🍫</button>
+          <button class="btn secondary" onclick="openShareModal()">Compartilhar e Ganhar! 🎁</button>
         </div>
       </div>
     </div>
@@ -258,11 +253,11 @@
       <h2 style="text-align:center;margin-bottom:24px">O que nossos clientes dizem</h2>
       <div class="testimonials">
         <div class="testimonial-card">
-          <p>"O brigadeiro gigante foi o destaque da festa! Todos amaram!"</p>
+          <p>"O brigadeiro gigante foi o destaque da festa! Entrega rápida e sabor incrível!"</p>
           <p class="mini muted">– Ana S., São Paulo</p>
         </div>
         <div class="testimonial-card">
-          <p>"Sabor incrível e entrega super rápida. Recomendo!"</p>
+          <p>"Feito sob encomenda, chegou perfeito! Recomendo!"</p>
           <p class="mini muted">– João P., Campinas</p>
         </div>
         <div class="testimonial-card">
@@ -284,7 +279,8 @@
 
   <div class="modal" id="confirmation-modal">
     <div class="modal-content">
-      <h3>Confirme seu Pedido</h3>
+      <h3>Confirme seu Pedido! 🍫</h3>
+      <p class="cta-text">Seu brigadeiro será feito sob encomenda após o pagamento!</p>
       <div id="order-summary"></div>
       <div class="pix-details">
         <h4>Pagamento via Pix</h4>
@@ -295,7 +291,7 @@
         <div class="pix-qr">
           <img src="https://placehold.co/200x200?text=QR+Code+Pix" alt="QR Code para pagamento Pix" />
         </div>
-        <p class="mini muted">Envie o comprovante para chocolatria@exemplo.com</p>
+        <p class="mini muted">Envie o comprovante para chocolatria@exemplo.com. Entraremos em contato via WhatsApp para confirmar!</p>
       </div>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:20px">
         <button class="btn" onclick="closeModal('confirmation-modal')">Fechar</button>
@@ -305,8 +301,8 @@
 
   <div class="modal" id="share-modal">
     <div class="modal-content share-modal-content">
-      <h3>Compartilhe e Ganhe Desconto!</h3>
-      <p>Convide 3+ amigos para o grupo e todos ganham 10% OFF extra via Pix!</p>
+      <h3>Compartilhe e Ganhe Desconto! 🎁</h3>
+      <p>Convide 3+ amigos para o grupo e todos ganham <strong>10% OFF extra (R$ 17,09)</strong> via Pix!</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
         <button class="btn share-btn" onclick="sharePrivateGroup()" aria-label="Compartilhar com amigos via WhatsApp">Compartilhar com Amigos (WhatsApp)</button>
         <button class="btn share-btn" onclick="sharePublicGroup()" aria-label="Compartilhar nas redes sociais">Compartilhar nas Redes (#BrigadeiroGigante)</button>
