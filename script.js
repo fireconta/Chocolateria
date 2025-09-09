@@ -220,7 +220,7 @@ function setupVideoObserver() {
         video.setAttribute('data-muted', 'true');
         if (button) {
           button.textContent = '🔇';
-          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
+          button.setAttribute('aria-label', `Ativar áudio do vídeo ${v.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
         }
       }
     });
@@ -474,16 +474,23 @@ function validateDate() {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentHour = now.getHours();
   
-  if (currentHour >= config.delivery.cutoffHour && selectedDate.getTime() === today.getTime()) {
-    toast('Entregas no mesmo dia só até 16h! Escolha amanhã ou depois.');
-    dateInput.value = '';
-    return false;
-  }
+  // Normalizar selectedDate para comparar apenas a data
+  selectedDate.setHours(0, 0, 0, 0);
+  
+  // Proibir datas passadas
   if (selectedDate < today) {
     toast('Selecione uma data futura!');
     dateInput.value = '';
     return false;
   }
+  
+  // Proibir entrega no mesmo dia após 16h
+  if (currentHour >= config.delivery.cutoffHour && selectedDate.getTime() === today.getTime()) {
+    toast('Entregas no mesmo dia só até 16h! Escolha amanhã ou depois.');
+    dateInput.value = '';
+    return false;
+  }
+  
   return true;
 }
 
@@ -536,131 +543,4 @@ function checkout() {
   preco = preco * (1 - config.pricing.standardDiscount); // 10% OFF padrão
   let groupDiscountApplied = false;
   if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
-    preco = preco * (1 - config.share.groupDiscountRate); // 10% OFF extra
-    groupDiscountApplied = true;
-    discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% OFF extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
-  }
-
-  // Resumo do pedido
-  const summary = `
-    <strong>Resumo do Pedido:</strong><br>
-    • Sabor: ${sabor}<br>
-    • Nome: ${state.name}<br>
-    • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}<br>
-    • Frete: Grátis (filial a 2,7 km)<br>
-    • Data de Entrega: ${new Date(data).toLocaleDateString('pt-BR')}<br>
-    • WhatsApp: ${state.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}<br>
-    • Preço: R$ ${preco.toFixed(2).replace('.', ',')}<br>
-    ${groupCode ? '• Código do Grupo: ' + groupCode + '<br>' : ''}
-    • <strong>${discountText}</strong><br>
-    • <strong class="highlight">Feito sob encomenda após pagamento!</strong>
-  `;
-  
-  const orderSummary = document.getElementById('order-summary');
-  const pixKeyText = document.getElementById('pix-key-text');
-  const confirmationModal = document.getElementById('confirmation-modal');
-  const dataModal = document.getElementById('data-modal');
-  if (orderSummary && pixKeyText && confirmationModal && dataModal) {
-    orderSummary.innerHTML = summary;
-    pixKeyText.textContent = config.pix.pixKey;
-    dataModal.classList.remove('show');
-    confirmationModal.classList.add('show');
-    toast('🚚 Dados confirmados! Prossiga para o pagamento.');
-    // Limpar campos após checkout
-    document.getElementById('data-number').value = '';
-    document.getElementById('data-whatsapp').value = '';
-    document.getElementById('data-name').value = '';
-    state.address.number = '';
-    state.whatsapp = '';
-    state.name = '';
-  }
-}
-
-// Copiar Chave Pix
-function copyPixKey() {
-  navigator.clipboard.writeText(config.pix.pixKey).then(() => {
-    toast('Chave Pix copiada!');
-  }).catch(() => {
-    toast('Erro ao copiar a chave Pix');
-  });
-}
-
-// Configurar data mínima
-function updateDateInput() {
-  const dateInput = document.getElementById('date');
-  if (!dateInput) return;
-  const now = new Date();
-  const currentHour = now.getHours();
-  const minDate = new Date();
-  if (currentHour >= config.delivery.cutoffHour) {
-    minDate.setDate(now.getDate() + 1); // Próximo dia após 16h
-  }
-  dateInput.min = minDate.toISOString().split('T')[0];
-}
-
-// Inicialização
-document.addEventListener('DOMContentLoaded', () => {
-  checkImageLoad();
-  setupSprinkles();
-  setHeroVideo();
-  setupVideoGallery();
-  setupVideoObserver();
-  startTimer();
-  checkUrlForGroupCode();
-  updateDateInput();
-});
-
-// Funções utilitárias
-function scrollToEl(sel) {
-  const el = document.querySelector(sel);
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
-}
-
-function toast(text) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = text;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) modal.classList.remove('show');
-}
-
-// Temporizador
-function startTimer() {
-  let time = 10 * 60;
-  const timerEl = document.getElementById('timer');
-  if (!timerEl) return;
-  const interval = setInterval(() => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    time--;
-    if (time < 0) {
-      time = 10 * 60;
-      toast('Oferta renovada por mais 10 minutos!');
-    }
-  }, 1000);
-}
-
-// Controle de estoque
-let stockCount = 5;
-const stockEl = document.getElementById('stock-alert');
-if (stockEl) {
-  setInterval(() => {
-    if (stockCount > 0) {
-      stockCount--;
-      stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
-      if (stockCount === 0) {
-        setTimeout(() => {
-          stockCount = 5;
-          stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
-          toast('Estoque reposto! Garanta o seu agora!');
-        }, 5000);
-      }
-    }
-  }, 15000);
-}
+    preco = preco * (1 - config.share.groupDiscountRate); // 10
