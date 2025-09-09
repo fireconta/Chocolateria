@@ -116,7 +116,7 @@ function toggleAudio(videoId) {
   toast(`Áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]} ${isMuted ? 'ativado' : 'desativado'}`);
 }
 
-// Configurar Intersection Observer para ativar áudio e pausar/reproduzir vídeos
+// Configurar Intersection Observer para pausar/reproduzir vídeos
 function setupVideoObserver() {
   if (!window.IntersectionObserver) {
     console.warn('IntersectionObserver not supported');
@@ -174,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupVideoGallery();
   setupVideoObserver();
   checkLocation(); // Inicializa o estado do campo de CEP
+  startTimer(); // Inicia o temporizador
 });
 
 // Configurações de Pix
@@ -215,7 +216,6 @@ function startTimer() {
     }
   }, 1000);
 }
-startTimer();
 
 // Controle de estoque animado
 let stockCount = 5;
@@ -240,8 +240,8 @@ if (stockEl) {
 function submitCep() {
   const cepInput = document.getElementById('cep');
   if (!cepInput) return;
-  const cep = cepInput.value;
-  const cepRegex = /^\d{5}-?\d{3}$/;
+  const cep = cepInput.value.replace(/\D/g, ''); // Remove caracteres não numéricos
+  const cepRegex = /^\d{8}$/;
   if (!cepRegex.test(cep)) {
     toast('CEP inválido! Use o formato 12345-678');
     return;
