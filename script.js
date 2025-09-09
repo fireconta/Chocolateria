@@ -116,7 +116,7 @@ function toggleAudio(videoId) {
   toast(`Áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]} ${isMuted ? 'ativado' : 'desativado'}`);
 }
 
-// Configurar Intersection Observer para ativar áudio automaticamente
+// Configurar Intersection Observer para ativar áudio e pausar/reproduzir vídeos
 function setupVideoObserver() {
   if (!window.IntersectionObserver) {
     console.warn('IntersectionObserver not supported');
@@ -127,11 +127,13 @@ function setupVideoObserver() {
       const video = entry.target;
       const button = document.querySelector(`[data-video-id="${video.id}"]`);
       if (entry.isIntersecting) {
-        // Ativar áudio do vídeo visível
+        // Reproduzir vídeo visível e ativar áudio
+        video.play().catch(e => console.error(`Play failed for ${video.id}:`, e));
         document.querySelectorAll('video').forEach(v => {
           if (v.id !== video.id) {
             v.muted = true;
             v.setAttribute('data-muted', 'true');
+            v.pause(); // Pausar vídeos não visíveis
             const btn = document.querySelector(`[data-video-id="${v.id}"]`);
             if (btn) {
               btn.textContent = '🔇';
@@ -146,10 +148,19 @@ function setupVideoObserver() {
           button.setAttribute('aria-label', `Desativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
           toast(`Áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]} ativado automaticamente`);
         }
+      } else {
+        // Pausar vídeo fora da tela
+        video.pause();
+        video.muted = true;
+        video.setAttribute('data-muted', 'true');
+        if (button) {
+          button.textContent = '🔇';
+          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
+        }
       }
     });
   }, {
-    threshold: 0.5 // Ativar quando 50% do vídeo estiver visível
+    threshold: 0.5 // Ativar/pausar quando 50% do vídeo estiver visível
   });
 
   // Observar todos os vídeos
