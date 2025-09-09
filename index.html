@@ -124,7 +124,7 @@
     .stock-alert { color: var(--danger); font-weight: 700; margin: 10px 0; font-size: clamp(1rem, 2.5vw, 1.2rem); transition: all 0.4s ease; animation: shake 0.5s infinite; }
     @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
     .share-modal-content, .data-modal-content { display: flex; flex-direction: column; gap: 16px; }
-    .share-input, .address-input, .whatsapp-input, .name-input { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--cream); padding: 8px 10px; border-radius: 8px; width: clamp(200px, 50vw, 300px); margin: 8px 0; }
+    .share-input, .address-input, .whatsapp-input, .name-input, .date-input { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--cream); padding: 8px 10px; border-radius: 8px; width: clamp(200px, 50vw, 300px); margin: 8px 0; }
     .address-label { display: block; text-align: left; font-weight: 700; margin-bottom: 4px; }
     .highlight { color: var(--gold); font-weight: 900; }
     .cta-text { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--success); font-weight: 700; margin: 10px 0; }
@@ -214,8 +214,7 @@
         </div>
         <div class="grid cols-2">
           <div class="card mini" style="grid-column: span 2;">
-            <strong>Data de Entrega:</strong>
-            <input id="date" type="date" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--cream);padding:8px 10px;border-radius:8px;margin-left:8px;width:clamp(150px, 40vw, 200px)" aria-label="Data de entrega" aria-required="true" />
+            <p class="cta-text">Clique em "Finalizar Pedido!" para inserir a data e endereço de entrega! 📅🚚</p>
           </div>
           <div id="group-input" class="card mini" style="grid-column:span 2;">
             <strong>Código do Grupo (opcional):</strong>
@@ -264,6 +263,10 @@
     <div class="modal-content data-modal-content">
       <h3>Insira seus Dados! 🚚</h3>
       <p class="cta-text">Preencha para entrega rápida e personalizada!</p>
+      <div>
+        <label class="address-label">Data de Entrega:</label>
+        <input id="date" type="date" class="date-input" aria-label="Data de entrega" aria-required="true" />
+      </div>
       <div>
         <label class="address-label">CEP:</label>
         <input id="data-cep" type="text" class="address-input" placeholder="12345-678" aria-label="CEP" aria-required="true" />
