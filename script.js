@@ -19,12 +19,17 @@ for (let i = 0; i < 160; i++) {
   spr.appendChild(el);
 }
 
-// Configurar vídeo do hero
+// Configurar vídeo do hero com autoplay garantido
 function setHeroVideo() {
   const heroVideo = document.querySelector('#hero-video source');
   if (heroVideo) {
     heroVideo.src = videos[0]; // Usa Video01.mp4 para o hero
-    heroVideo.parentElement.load(); // Recarrega o vídeo
+    const videoElement = heroVideo.parentElement;
+    videoElement.load(); // Recarrega o vídeo
+    // Força autoplay após carregamento para garantir funcionamento
+    videoElement.addEventListener('loadeddata', () => {
+      videoElement.play().catch(e => console.log('Autoplay prevented:', e));
+    });
   }
 }
 
