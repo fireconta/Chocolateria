@@ -241,7 +241,7 @@ function openDataModal() {
     return;
   }
   if (!data || !validateDate()) {
-    toast('Selecione uma data de entrega válida (a partir de 10/09/2025)! 📅');
+    toast('Selecione uma data de entrega válida (a partir de 09/09/2025)! 📅');
     scrollToEl('#comprar');
     return;
   }
@@ -481,27 +481,20 @@ function validateDate() {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentHour = now.getHours();
-  const minDate = new Date(today);
-  if (currentHour >= config.delivery.cutoffHour) {
-    minDate.setDate(today.getDate() + 1);
-  }
   
   selectedDate.setHours(0, 0, 0, 0);
   
-  console.log(`Validando data: ${selectedDateStr} (Selecionada: ${selectedDate.toLocaleDateString('pt-BR')}, Mínima: ${minDate.toLocaleDateString('pt-BR')})`);
+  console.log(`Validando data: ${selectedDateStr} (Selecionada: ${selectedDate.toLocaleDateString('pt-BR')}, Mínima: ${today.toLocaleDateString('pt-BR')})`);
   
-  if (selectedDate < minDate) {
-    toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')} 📅`);
+  if (selectedDate < today) {
+    toast(`Data inválida! Escolha a partir de ${today.toLocaleDateString('pt-BR')} 📅`);
     dateInput.value = '';
     dateInput.focus();
     return false;
   }
   
   if (currentHour >= config.delivery.cutoffHour && selectedDate.getTime() === today.getTime()) {
-    toast('Entregas no mesmo dia só até 16h! Escolha amanhã ou depois. 📅');
-    dateInput.value = '';
-    dateInput.focus();
-    return false;
+    toast('Entregas no mesmo dia após 16h podem ter prazo estendido. 🚚');
   }
   
   return true;
@@ -516,13 +509,8 @@ function updateDateInput() {
     return;
   }
   const now = new Date();
-  const currentHour = now.getHours();
-  const minDate = new Date();
-  minDate.setHours(0, 0, 0, 0); // Normalizar para 00:00:00
-  if (currentHour >= config.delivery.cutoffHour) {
-    minDate.setDate(minDate.getDate() + 1); // Após 16h, data mínima é amanhã
-  }
-  const minDateStr = minDate.toISOString().split('T')[0];
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const minDateStr = today.toISOString().split('T')[0]; // Data mínima é hoje
   dateInput.min = minDateStr;
   console.log(`Data mínima definida: ${minDateStr} (Horário atual: ${now.toLocaleString('pt-BR')})`);
   
@@ -537,9 +525,9 @@ function updateDateInput() {
       return;
     }
     selectedDate.setHours(0, 0, 0, 0);
-    if (selectedDate < minDate) {
+    if (selectedDate < today) {
       console.warn(`Data selecionada (${dateInput.value}) é anterior à mínima (${minDateStr})`);
-      toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')} 📅`);
+      toast(`Data inválida! Escolha a partir de ${today.toLocaleDateString('pt-BR')} 📅`);
       dateInput.value = '';
       dateInput.focus();
     }
