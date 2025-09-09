@@ -7,56 +7,84 @@ const videos = [
 ];
 
 // Granulado animado
-const spr = document.getElementById('sprinkles');
-for (let i = 0; i < 160; i++) {
-  const el = document.createElement('i');
-  el.style.setProperty('--r', `${Math.random() * 80 - 40}deg`);
-  el.style.setProperty('--tx', `${Math.random() * 240 - 120}%`);
-  el.style.setProperty('--ty', `${Math.random() * 240 - 120}%`);
-  el.style.left = Math.random() * 100 + '%';
-  el.style.top = Math.random() * 100 + '%';
-  el.style.opacity = Math.random() * 0.35 + 0.65;
-  spr.appendChild(el);
+function setupSprinkles() {
+  const spr = document.getElementById('sprinkles');
+  if (!spr) {
+    console.error('Sprinkles container not found');
+    return;
+  }
+  for (let i = 0; i < 160; i++) {
+    const el = document.createElement('i');
+    el.style.setProperty('--r', `${Math.random() * 80 - 40}deg`);
+    el.style.setProperty('--tx', `${Math.random() * 240 - 120}%`);
+    el.style.setProperty('--ty', `${Math.random() * 240 - 120}%`);
+    el.style.left = Math.random() * 100 + '%';
+    el.style.top = Math.random() * 100 + '%';
+    el.style.opacity = Math.random() * 0.35 + 0.65;
+    spr.appendChild(el);
+  }
 }
 
 // Configurar vídeo do hero com autoplay garantido
 function setHeroVideo() {
   const heroVideo = document.querySelector('#hero-video source');
-  if (heroVideo) {
-    heroVideo.src = videos[0]; // Usa Video01.mp4 para o hero
-    const videoElement = heroVideo.parentElement;
-    videoElement.load(); // Recarrega o vídeo
-    // Força autoplay após carregamento para garantir funcionamento
-    videoElement.addEventListener('loadeddata', () => {
-      videoElement.play().catch(e => console.log('Autoplay prevented:', e));
+  if (!heroVideo) {
+    console.error('Hero video source not found');
+    toast('Erro ao carregar o vídeo principal');
+    return;
+  }
+  heroVideo.src = videos[0]; // Usa Video01.mp4 para o hero
+  const videoElement = heroVideo.parentElement;
+  videoElement.load(); // Recarrega o vídeo
+
+  // Força autoplay com retry
+  function tryPlay(attempts = 3, delay = 500) {
+    videoElement.play().catch(e => {
+      console.warn(`Autoplay attempt failed: ${e.message}`);
+      if (attempts > 0) {
+        setTimeout(() => tryPlay(attempts - 1, delay * 2), delay);
+      } else {
+        console.error('Autoplay failed after retries');
+        toast('Toque no vídeo para iniciar a reprodução');
+      }
     });
   }
+
+  videoElement.addEventListener('loadeddata', () => {
+    tryPlay();
+  }, { once: true });
 }
 
 // Configurar galeria de vídeos
 function setupVideoGallery() {
   const gallery = document.getElementById('video-gallery');
-  if (gallery) {
-    videos.slice(1).forEach((videoSrc, index) => {
-      const videoCard = document.createElement('div');
-      videoCard.className = 'video-card';
-      videoCard.innerHTML = `
-        <video autoplay loop playsinline id="gallery-video-${index}" data-muted="true">
-          <source src="${videoSrc}" type="video/mp4">
-        </video>
-        <button class="btn audio-btn" data-video-id="gallery-video-${index}" onclick="toggleAudio('gallery-video-${index}')" aria-label="Ativar áudio do vídeo ${index + 2}" tabindex="0">🔇</button>
-        <p class="mini muted">Vídeo ${index + 2}</p>
-      `;
-      gallery.appendChild(videoCard);
-    });
+  if (!gallery) {
+    console.error('Video gallery container not found');
+    return;
   }
+  videos.slice(1).forEach((videoSrc, index) => {
+    const videoCard = document.createElement('div');
+    videoCard.className = 'video-card';
+    const videoId = `gallery-video-${index}`;
+    videoCard.innerHTML = `
+      <video autoplay loop playsinline muted id="${videoId}" data-muted="true">
+        <source src="${videoSrc}" type="video/mp4">
+      </video>
+      <button class="btn audio-btn" data-video-id="${videoId}" aria-controls="${videoId}" onclick="toggleAudio('${videoId}')" aria-label="Ativar áudio do vídeo ${index + 2}" tabindex="0">🔇</button>
+      <p class="mini muted">Vídeo ${index + 2}</p>
+    `;
+    gallery.appendChild(videoCard);
+  });
 }
 
 // Alternar áudio do vídeo
 function toggleAudio(videoId) {
   const video = document.getElementById(videoId);
   const button = document.querySelector(`[data-video-id="${videoId}"]`);
-  if (!video || !button) return;
+  if (!video || !button) {
+    console.error(`Video or button not found for ID: ${videoId}`);
+    return;
+  }
 
   const isMuted = video.getAttribute('data-muted') === 'true';
 
@@ -83,6 +111,10 @@ function toggleAudio(videoId) {
 
 // Configurar Intersection Observer para ativar áudio automaticamente
 function setupVideoObserver() {
+  if (!window.IntersectionObserver) {
+    console.warn('IntersectionObserver not supported');
+    return;
+  }
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const video = entry.target;
@@ -114,13 +146,12 @@ function setupVideoObserver() {
   });
 
   // Observar todos os vídeos
-  document.querySelectorAll('video').forEach(video => {
-    observer.observe(video);
-  });
+  document.querySelectorAll('video').forEach(video => observer.observe(video));
 }
 
 // Chama as funções ao carregar a página
 document.addEventListener('DOMContentLoaded', () => {
+  setupSprinkles();
   setHeroVideo();
   setupVideoGallery();
   setupVideoObserver();
@@ -133,24 +164,28 @@ const pixQrCodeUrl = "https://placehold.co/200x200?text=QR+Code+Pix";
 
 // Funções utilitárias
 function scrollToEl(sel) {
-  document.querySelector(sel)?.scrollIntoView({ behavior: 'smooth' });
+  const el = document.querySelector(sel);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
 function toast(text) {
   const t = document.getElementById('toast');
+  if (!t) return;
   t.textContent = text;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
 function closeModal(modalId) {
-  document.getElementById(modalId).classList.remove('show');
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.remove('show');
 }
 
 // Temporizador de Urgência
 function startTimer() {
   let time = 10 * 60; // 10 minutos
   const timerEl = document.getElementById('timer');
+  if (!timerEl) return;
   const interval = setInterval(() => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
@@ -167,42 +202,52 @@ startTimer();
 // Controle de estoque animado
 let stockCount = 5;
 const stockEl = document.getElementById('stock-alert');
-setInterval(() => {
-  if (stockCount > 0) {
-    stockCount--;
-    stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
-    if (stockCount === 0) {
-      setTimeout(() => {
-        stockCount = 5;
-        stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
-        toast('Estoque reposto! Garanta o seu agora!');
-      }, 5000);
+if (stockEl) {
+  setInterval(() => {
+    if (stockCount > 0) {
+      stockCount--;
+      stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
+      if (stockCount === 0) {
+        setTimeout(() => {
+          stockCount = 5;
+          stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
+          toast('Estoque reposto! Garanta o seu agora!');
+        }, 5000);
+      }
     }
-  }
-}, 15000);
+  }, 15000);
+}
 
 // Validação de CEP
 function submitCep() {
-  const cep = document.getElementById('cep').value;
+  const cepInput = document.getElementById('cep');
+  if (!cepInput) return;
+  const cep = cepInput.value;
   const cepRegex = /^\d{5}-?\d{3}$/;
   if (!cepRegex.test(cep)) {
     toast('CEP inválido! Use o formato 12345-678');
     return;
   }
-  document.getElementById('frete-message').textContent = 'Frete: Grátis (filial a 2,7 km)';
-  document.getElementById('location-message').style.display = 'block';
-  document.getElementById('cep-input').style.display = 'none';
+  const freteMessage = document.getElementById('frete-message');
+  const locationMessage = document.getElementById('location-message');
+  const cepInputContainer = document.getElementById('cep-input');
+  if (freteMessage && locationMessage && cepInputContainer) {
+    freteMessage.textContent = 'Frete: Grátis (filial a 2,7 km)';
+    locationMessage.style.display = 'block';
+    cepInputContainer.style.display = 'none';
+  }
 }
 
 // Validação de Data
 function validateDate() {
-  const dateInput = document.getElementById('date').value;
-  const selectedDate = new Date(dateInput);
+  const dateInput = document.getElementById('date');
+  if (!dateInput) return false;
+  const selectedDate = new Date(dateInput.value);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   if (selectedDate < today) {
     toast('Selecione uma data futura!');
-    document.getElementById('date').value = '';
+    dateInput.value = '';
     return false;
   }
   return true;
@@ -212,8 +257,8 @@ function validateDate() {
 function checkout() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
   const entrega = document.querySelector('input[name="retirada"]:checked')?.value;
-  const data = document.getElementById('date').value || 'a combinar';
-  const preco = document.getElementById('price').textContent;
+  const data = document.getElementById('date')?.value || 'a combinar';
+  const preco = document.getElementById('price')?.textContent;
   const cep = document.getElementById('cep')?.value || '';
   const freteMessage = entrega === 'Entrega' && cep ? 'Frete: Grátis (filial a 2,7 km)' : entrega === 'Entrega' ? 'Informe o CEP' : 'Retirada no ateliê';
 
@@ -239,15 +284,22 @@ function checkout() {
     ${cep ? '• CEP: ' + cep : ''}<br>
     • <strong>Desconto: 10% OFF aplicado!</strong>
   `;
-  document.getElementById('order-summary').innerHTML = summary;
-  document.getElementById('pix-key-text').textContent = pixKey;
-  document.getElementById('confirmation-modal').classList.add('show');
+  const orderSummary = document.getElementById('order-summary');
+  const pixKeyText = document.getElementById('pix-key-text');
+  const confirmationModal = document.getElementById('confirmation-modal');
+  if (orderSummary && pixKeyText && confirmationModal) {
+    orderSummary.innerHTML = summary;
+    pixKeyText.textContent = pixKey;
+    confirmationModal.classList.add('show');
+  }
 }
 
 // Copiar Chave Pix
 function copyPixKey() {
   navigator.clipboard.writeText(pixKey).then(() => {
     toast('Chave Pix copiada!');
+  }).catch(() => {
+    toast('Erro ao copiar a chave Pix');
   });
 }
 
@@ -258,6 +310,8 @@ function share() {
       title: 'Brigadeiro Gigante – Chocolatria',
       text: 'Descubra o Brigadeiro Gigante da Chocolatria! Edição limitada, perfeito para surpreender!',
       url: window.location.href,
+    }).catch(() => {
+      toast('Erro ao compartilhar');
     });
   } else {
     toast('Compartilhe o link: ' + window.location.href);
@@ -267,11 +321,20 @@ function share() {
 // Mostrar/Esconder Inputs de Localização
 function checkLocation() {
   const entrega = document.querySelector('input[name="retirada"]:checked')?.value;
-  document.getElementById('cep-input').style.display = entrega === 'Entrega' ? 'block' : 'none';
-  document.getElementById('location-message').style.display = 'none';
+  const cepInput = document.getElementById('cep-input');
+  const locationMessage = document.getElementById('location-message');
+  if (cepInput && locationMessage) {
+    cepInput.style.display = entrega === 'Entrega' ? 'block' : 'none';
+    locationMessage.style.display = entrega === 'Entrega' && document.getElementById('frete-message').textContent ? 'block' : 'none';
+  }
 }
 
 function hideLocationInputs() {
-  document.getElementById('cep-input').style.display = 'none';
-  document.getElementById('location-message').style.display = 'none';
+  const cepInput = document.getElementById('cep-input');
+  const locationMessage = document.getElementById('location-message');
+  if (cepInput && locationMessage) {
+    cepInput.style.display = 'none';
+    locationMessage.style.display = 'none';
+    if (document.getElementById('cep')) document.getElementById('cep').value = ''; // Limpa o CEP
+  }
 }
