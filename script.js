@@ -53,6 +53,13 @@ function setHeroVideo() {
   videoElement.addEventListener('loadeddata', () => {
     tryPlay();
   }, { once: true });
+
+  // Fallback para interação do usuário
+  videoElement.addEventListener('click', () => {
+    if (videoElement.paused) {
+      videoElement.play().catch(e => console.error('Manual play failed:', e));
+    }
+  });
 }
 
 // Configurar galeria de vídeos
@@ -325,7 +332,7 @@ function checkLocation() {
   const locationMessage = document.getElementById('location-message');
   if (cepInput && locationMessage) {
     cepInput.style.display = entrega === 'Entrega' ? 'block' : 'none';
-    locationMessage.style.display = entrega === 'Entrega' && document.getElementById('frete-message').textContent ? 'block' : 'none';
+    locationMessage.style.display = 'none';
   }
 }
 
@@ -335,6 +342,5 @@ function hideLocationInputs() {
   if (cepInput && locationMessage) {
     cepInput.style.display = 'none';
     locationMessage.style.display = 'none';
-    if (document.getElementById('cep')) document.getElementById('cep').value = ''; // Limpa o CEP
   }
 }
