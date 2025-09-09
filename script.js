@@ -245,6 +245,85 @@ function formatWhatsApp(input) {
   }
 }
 
+// Autoformatação do CEP
+function formatCEP(input) {
+  let value = input.value.replace(/\D/g, '');
+  if (value.length > 8) value = value.slice(0, 8);
+  
+  if (value.length <= 5) {
+    input.value = value;
+  } else {
+    input.value = `${value.slice(0, 5)}-${value.slice(5)}`;
+  }
+  
+  // Disparar busca automática quando o CEP tiver 8 dígitos
+  if (value.length === 8) {
+    fetchAddress();
+  }
+}
+
+// Atualizar status do formulário
+function updateFormStatus() {
+  const dateInput = document.getElementById('date');
+  const cepInput = document.getElementById('data-cep');
+  const streetInput = document.getElementById('data-street');
+  const numberInput = document.getElementById('data-number');
+  const neighborhoodInput = document.getElementById('data-neighborhood');
+  const cityInput = document.getElementById('data-city');
+  const stateInput = document.getElementById('data-state');
+  const whatsappInput = document.getElementById('data-whatsapp');
+  const nameInput = document.getElementById('data-name');
+  const statusEl = document.getElementById('form-status');
+  const confirmBtn = document.getElementById('confirm-data-btn');
+
+  if (!dateInput || !cepInput || !streetInput || !numberInput || !neighborhoodInput || !cityInput || !stateInput || !whatsappInput || !nameInput || !statusEl || !confirmBtn) {
+    console.error('Um ou mais elementos do formulário não encontrados');
+    return;
+  }
+
+  // Validar Data
+  const selectedDateStr = dateInput.value;
+  let isDateValid = false;
+  if (selectedDateStr) {
+    const selectedDate = new Date(selectedDateStr);
+    const today = new Date(2025, 8, 9); // 09/09/2025
+    selectedDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    isDateValid = !isNaN(selectedDate.getTime()) && selectedDate >= today;
+  }
+
+  // Validar CEP
+  const cep = cepInput.value.replace(/\D/g, '');
+  const isCepValid = /^\d{8}$/.test(cep);
+
+  // Validar Endereço
+  const isAddressValid = streetInput.value.trim() && numberInput.value.trim() && neighborhoodInput.value.trim() && cityInput.value.trim() && stateInput.value.trim();
+
+  // Validar WhatsApp
+  const whatsapp = whatsappInput.value.replace(/\D/g, '');
+  const isWhatsAppValid = /^\d{10,11}$/.test(whatsapp);
+
+  // Validar Nome
+  const name = nameInput.value.trim();
+  const isNameValid = /^[A-Za-z\s]{3,}$/.test(name);
+
+  // Atualizar status
+  const allValid = isDateValid && isCepValid && isAddressValid && isWhatsAppValid && isNameValid;
+  if (allValid) {
+    statusEl.textContent = 'Todos os campos foram preenchidos corretamente! ✅';
+    statusEl.style.color = 'var(--success)';
+    confirmBtn.disabled = false;
+    confirmBtn.style.opacity = '1';
+    confirmBtn.style.cursor = 'pointer';
+  } else {
+    statusEl.textContent = 'Preencha todos os campos obrigatórios! 🚫';
+    statusEl.style.color = 'var(--danger)';
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.6';
+    confirmBtn.style.cursor = 'not-allowed';
+  }
+}
+
 // Abrir modal de dados
 function openDataModal() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
@@ -270,17 +349,43 @@ function openDataModal() {
     document.getElementById('data-whatsapp').value = state.whatsapp || '';
     document.getElementById('data-name').value = state.name || '';
     document.getElementById('data-address-input').style.display = state.address.cep ? 'block' : 'none';
-    updateDateInput(); // Configura data mínima no modal
+    updateDateInput();
 
-    // Adicionar listener para formatação do WhatsApp
+    // Adicionar listeners para formatação e validação
     const whatsappInput = document.getElementById('data-whatsapp');
+    const cepInput = document.getElementById('data-cep');
+    const dateInput = document.getElementById('date');
+    const numberInput = document.getElementById('data-number');
+    const nameInput = document.getElementById('data-name');
+
     if (whatsappInput) {
-      whatsappInput.addEventListener('input', () => formatWhatsApp(whatsappInput));
+      whatsappInput.addEventListener('input', () => {
+        formatWhatsApp(whatsappInput);
+        updateFormStatus();
+      });
     }
+    if (cepInput) {
+      cepInput.addEventListener('input', () => {
+        formatCEP(cepInput);
+        updateFormStatus();
+      });
+    }
+    if (dateInput) {
+      dateInput.addEventListener('input', updateFormStatus);
+    }
+    if (numberInput) {
+      numberInput.addEventListener('input', updateFormStatus);
+    }
+    if (nameInput) {
+      nameInput.addEventListener('input', updateFormStatus);
+    }
+
+    // Atualizar status inicial
+    updateFormStatus();
   }
 }
 
-// Buscar endereço pelo CEP (usando API ViaCEP)
+// Buscar endereço pelo CEP
 async function fetchAddress() {
   const cepInput = document.getElementById('data-cep');
   if (!cepInput) return;
@@ -288,6 +393,7 @@ async function fetchAddress() {
   const cepRegex = /^\d{8}$/;
   if (!cepRegex.test(cep)) {
     toast('CEP inválido! Use o formato 12345-678 📍');
+    updateFormStatus();
     return;
   }
 
@@ -297,6 +403,7 @@ async function fetchAddress() {
 
     if (data.erro) {
       toast('CEP não encontrado! 😕');
+      updateFormStatus();
       return;
     }
 
@@ -318,16 +425,25 @@ async function fetchAddress() {
       cityInput.value = data.localidade || '';
       stateInput.value = data.uf || '';
       addressInput.style.display = 'block';
+      cepInput.value = `${cep.slice(0, 5)}-${cep.slice(5)}`;
       toast('Endereço carregado! Insira o número, WhatsApp e nome. ✅');
+      updateFormStatus();
     }
   } catch (error) {
     console.error('Erro ao buscar endereço:', error);
     toast('Erro ao buscar endereço. Tente novamente. 🔄');
+    updateFormStatus();
   }
 }
 
 // Confirmar dados do modal
 function confirmData() {
+  updateFormStatus();
+  const confirmBtn = document.getElementById('confirm-data-btn');
+  if (confirmBtn.disabled) {
+    toast('Preencha todos os campos corretamente antes de confirmar! 🚫');
+    return;
+  }
   if (!validateDate()) return;
   const numberInput = document.getElementById('data-number');
   if (numberInput) {
@@ -337,6 +453,102 @@ function confirmData() {
   if (!validateWhatsApp()) return;
   if (!validateName()) return;
   checkout();
+}
+
+// Enviar pedido ao servidor
+async function saveOrderToServer(orderData) {
+  try {
+    const response = await fetch('save_order.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orderData)
+    });
+    const result = await response.json();
+    if (result.success) {
+      toast('Dados do pedido salvos com sucesso! ✅');
+    } else {
+      console.error('Erro ao salvar pedido:', result.error);
+      toast('Erro ao salvar os dados do pedido. Tente novamente. 😕');
+    }
+  } catch (error) {
+    console.error('Erro na requisição ao servidor:', error);
+    toast('Erro ao salvar os dados do pedido. Tente novamente. 🔄');
+  }
+}
+
+// Checkout
+function checkout() {
+  const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
+  const data = document.getElementById('date')?.value;
+  let preco = config.pricing.basePrice;
+  const groupCode = state.group.groupCode || '';
+
+  // Aplicar descontos
+  let discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
+  preco = preco * (1 - config.pricing.standardDiscount); // 10% OFF padrão
+  let groupDiscountApplied = false;
+  if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
+    preco = preco * (1 - config.share.groupDiscountRate); // 10% OFF extra
+    groupDiscountApplied = true;
+    discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% OFF extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
+  }
+
+  // Resumo do pedido
+  const summary = `
+    <strong>Resumo do Pedido:</strong><br>
+    • Sabor: ${sabor}<br>
+    • Nome: ${state.name}<br>
+    • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}<br>
+    • Frete: Grátis (filial a 2,7 km)<br>
+    • Data de Entrega: ${new Date(data).toLocaleDateString('pt-BR')}<br>
+    • WhatsApp: ${state.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}<br>
+    • Preço: R$ ${preco.toFixed(2).replace('.', ',')}<br>
+    ${groupCode ? '• Código do Grupo: ' + groupCode + '<br>' : ''}
+    • <strong>${discountText}</strong><br>
+    • <strong class="highlight">Feito sob encomenda após pagamento!</strong>
+  `;
+  
+  const orderSummary = document.getElementById('order-summary');
+  const pixKeyText = document.getElementById('pix-key-text');
+  const confirmationModal = document.getElementById('confirmation-modal');
+  const dataModal = document.getElementById('data-modal');
+  if (orderSummary && pixKeyText && confirmationModal && dataModal) {
+    orderSummary.innerHTML = summary;
+    pixKeyText.textContent = config.pix.pixKey;
+    dataModal.classList.remove('show');
+    confirmationModal.classList.add('show');
+    toast('🚚 Dados confirmados! Prossiga para o pagamento. 💸');
+
+    // Preparar dados para envio ao servidor
+    const orderData = {
+      name: state.name,
+      date: new Date(data).toLocaleDateString('pt-BR'),
+      cep: state.address.cep.replace(/(\d{5})(\d{3})/, '$1-$2'),
+      street: state.address.street,
+      number: state.address.number,
+      neighborhood: state.address.neighborhood,
+      city: state.address.city,
+      state: state.address.state,
+      whatsapp: state.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3'),
+      flavor: sabor,
+      price: preco.toFixed(2).replace('.', ','),
+      groupCode: groupCode || 'Nenhum'
+    };
+
+    // Enviar dados ao servidor
+    saveOrderToServer(orderData);
+
+    // Limpar campos
+    document.getElementById('date').value = '';
+    document.getElementById('data-number').value = '';
+    document.getElementById('data-whatsapp').value = '';
+    document.getElementById('data-name').value = '';
+    state.address.number = '';
+    state.whatsapp = '';
+    state.name = '';
+  }
 }
 
 // Abrir modal de compartilhamento
@@ -496,10 +708,11 @@ function validateDate() {
     return false;
   }
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = new Date(2025, 8, 9); // 09/09/2025
   const currentHour = now.getHours();
   
   selectedDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
   
   console.log(`Validando data: ${selectedDateStr} (Selecionada: ${selectedDate.toLocaleDateString('pt-BR')}, Mínima: ${today.toLocaleDateString('pt-BR')})`);
   
@@ -526,8 +739,8 @@ function updateDateInput() {
     return;
   }
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const minDateStr = today.toISOString().split('T')[0]; // Data mínima é hoje
+  const today = new Date(2025, 8, 9); // 09/09/2025
+  const minDateStr = today.toISOString().split('T')[0]; // Data mínima é 09/09/2025
   dateInput.min = minDateStr;
   console.log(`Data mínima definida: ${minDateStr} (Horário atual: ${now.toLocaleString('pt-BR')})`);
   
@@ -589,58 +802,6 @@ function validateName() {
   }
   state.name = name;
   return true;
-}
-
-// Checkout
-function checkout() {
-  const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
-  const data = document.getElementById('date')?.value;
-  let preco = config.pricing.basePrice;
-  const groupCode = state.group.groupCode || '';
-
-  // Aplicar descontos
-  let discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
-  preco = preco * (1 - config.pricing.standardDiscount); // 10% OFF padrão
-  let groupDiscountApplied = false;
-  if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
-    preco = preco * (1 - config.share.groupDiscountRate); // 10% OFF extra
-    groupDiscountApplied = true;
-    discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% OFF extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
-  }
-
-  // Resumo do pedido
-  const summary = `
-    <strong>Resumo do Pedido:</strong><br>
-    • Sabor: ${sabor}<br>
-    • Nome: ${state.name}<br>
-    • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}<br>
-    • Frete: Grátis (filial a 2,7 km)<br>
-    • Data de Entrega: ${new Date(data).toLocaleDateString('pt-BR')}<br>
-    • WhatsApp: ${state.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}<br>
-    • Preço: R$ ${preco.toFixed(2).replace('.', ',')}<br>
-    ${groupCode ? '• Código do Grupo: ' + groupCode + '<br>' : ''}
-    • <strong>${discountText}</strong><br>
-    • <strong class="highlight">Feito sob encomenda após pagamento!</strong>
-  `;
-  
-  const orderSummary = document.getElementById('order-summary');
-  const pixKeyText = document.getElementById('pix-key-text');
-  const confirmationModal = document.getElementById('confirmation-modal');
-  const dataModal = document.getElementById('data-modal');
-  if (orderSummary && pixKeyText && confirmationModal && dataModal) {
-    orderSummary.innerHTML = summary;
-    pixKeyText.textContent = config.pix.pixKey;
-    dataModal.classList.remove('show');
-    confirmationModal.classList.add('show');
-    toast('🚚 Dados confirmados! Prossiga para o pagamento. 💸');
-    document.getElementById('date').value = '';
-    document.getElementById('data-number').value = '';
-    document.getElementById('data-whatsapp').value = '';
-    document.getElementById('data-name').value = '';
-    state.address.number = '';
-    state.whatsapp = '';
-    state.name = '';
-  }
 }
 
 // Copiar Chave Pix
