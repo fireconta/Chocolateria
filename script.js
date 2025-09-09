@@ -236,17 +236,17 @@ function openDataModal() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
   const data = document.getElementById('date')?.value;
   if (!sabor) {
-    toast('Selecione um sabor antes de continuar!');
+    toast('Selecione um sabor antes de continuar! 🍫');
     scrollToEl('#comprar');
     return;
   }
   if (!data || !validateDate()) {
-    toast('Selecione uma data de entrega válida!');
+    toast('Selecione uma data de entrega válida (a partir de 10/09/2025)! 📅');
     scrollToEl('#comprar');
     return;
   }
   if (stockCount === 0) {
-    toast('Estoque esgotado! Aguarde a reposição.');
+    toast('Estoque esgotado! Aguarde a reposição. ⏳');
     return;
   }
   const dataModal = document.getElementById('data-modal');
@@ -271,7 +271,7 @@ async function fetchAddress() {
   const cep = cepInput.value.replace(/\D/g, '');
   const cepRegex = /^\d{8}$/;
   if (!cepRegex.test(cep)) {
-    toast('CEP inválido! Use o formato 12345-678');
+    toast('CEP inválido! Use o formato 12345-678 📍');
     return;
   }
 
@@ -280,7 +280,7 @@ async function fetchAddress() {
     const data = await response.json();
 
     if (data.erro) {
-      toast('CEP não encontrado!');
+      toast('CEP não encontrado! 😕');
       return;
     }
 
@@ -302,11 +302,11 @@ async function fetchAddress() {
       cityInput.value = data.localidade || '';
       stateInput.value = data.uf || '';
       addressInput.style.display = 'block';
-      toast('Endereço carregado! Insira o número, WhatsApp e nome.');
+      toast('Endereço carregado! Insira o número, WhatsApp e nome. ✅');
     }
   } catch (error) {
     console.error('Erro ao buscar endereço:', error);
-    toast('Erro ao buscar endereço. Tente novamente.');
+    toast('Erro ao buscar endereço. Tente novamente. 🔄');
   }
 }
 
@@ -345,14 +345,14 @@ function sharePrivateGroup() {
       text: message,
       url: shareUrl
     }).then(() => {
-      toast('Link compartilhado com sucesso!');
+      toast('Link compartilhado com sucesso! 🎉');
       updateGroupProgress();
     }).catch(() => {
-      toast('Erro ao compartilhar. Copie o link manualmente.');
+      toast('Erro ao compartilhar. Copie o link manualmente. 🔗');
     });
   } else {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
-    toast('Compartilhe o link pelo WhatsApp!');
+    toast('Compartilhe o link pelo WhatsApp! 📲');
     updateGroupProgress();
   }
 }
@@ -368,13 +368,13 @@ function sharePublicGroup() {
       url: config.share.baseUrl
     }).then(() => {
       state.group.publicShared = true;
-      toast('Post compartilhado nas redes sociais!');
+      toast('Post compartilhado nas redes sociais! 📸');
       updateGroupProgress();
     }).catch(() => {
-      toast('Erro ao compartilhar. Copie o link manualmente.');
+      toast('Erro ao compartilhar. Copie o link manualmente. 🔗');
     });
   } else {
-    toast(`Compartilhe nas redes com ${config.share.hashtag}: ${config.share.baseUrl}`);
+    toast(`Compartilhe nas redes com ${config.share.hashtag}: ${config.share.baseUrl} 📷`);
     state.group.publicShared = true;
     updateGroupProgress();
   }
@@ -389,7 +389,7 @@ function shareViaEmail() {
   const subject = 'Convite: Brigadeiro Gigante com 10% OFF!';
   const body = `Junte-se ao meu grupo para comprar o Brigadeiro Gigante com 10% OFF extra (R$ 17,09)! Use o código ${groupCode}: ${shareUrl}`;
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  toast('Convite enviado por e-mail!');
+  toast('Convite enviado por e-mail! 📧');
   updateGroupProgress();
 }
 
@@ -400,10 +400,10 @@ function copyShareLink() {
   state.group.privateShared = true;
   const shareUrl = `${config.share.baseUrl}?ref=${groupCode}`;
   navigator.clipboard.writeText(shareUrl).then(() => {
-    toast('Link de convite copiado!');
+    toast('Link de convite copiado! 🔗');
     updateGroupProgress();
   }).catch(() => {
-    toast('Erro ao copiar o link');
+    toast('Erro ao copiar o link 😕');
   });
 }
 
@@ -418,14 +418,14 @@ function applyGroupCode() {
   if (!groupCodeInput) return;
   const code = groupCodeInput.value.trim().toUpperCase();
   if (code && code.length !== 6) {
-    toast('Código de grupo inválido! Use o formato ABC123');
+    toast('Código de grupo inválido! Use o formato ABC123 😕');
     return;
   }
   state.group.groupCode = code || state.group.groupCode;
   state.group.groupSize = code ? Math.floor(Math.random() * 5) + 1 : state.group.groupSize; // Simulação
   updateGroupProgress();
   if (code) {
-    toast(`Código ${code} aplicado! Grupo: ${state.group.groupSize}/${config.share.groupDiscountThreshold} pessoas`);
+    toast(`Código ${code} aplicado! Grupo: ${state.group.groupSize}/${config.share.groupDiscountThreshold} pessoas 🎉`);
   }
 }
 
@@ -436,7 +436,7 @@ function updateGroupProgress() {
     const status = state.group.privateShared && state.group.publicShared ? 'Completo' : 'Pendente';
     progressEl.innerHTML = `Grupo: ${state.group.groupSize}/${config.share.groupDiscountThreshold} pessoas | Status: ${status}`;
     if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
-      toast('Desconto de 10% extra (R$ 17,09) aplicado para o grupo!');
+      toast('Desconto de 10% extra (R$ 17,09) aplicado para o grupo! 🎁');
     }
   }
 }
@@ -451,7 +451,7 @@ function checkUrlForGroupCode() {
     const groupCodeInput = document.getElementById('group-code');
     if (groupCodeInput) groupCodeInput.value = ref;
     updateGroupProgress();
-    toast(`Código ${ref} aplicado automaticamente!`);
+    toast(`Código ${ref} aplicado automaticamente! 🎉`);
   }
 }
 
@@ -460,41 +460,47 @@ function validateDate() {
   const dateInput = document.getElementById('date');
   if (!dateInput) {
     console.error('Campo de data (#date) não encontrado');
-    toast('Erro interno: campo de data não encontrado.');
+    toast('Erro interno: campo de data não encontrado. 😕');
     return false;
   }
   const selectedDateStr = dateInput.value;
   if (!selectedDateStr) {
     console.warn('Nenhuma data selecionada');
-    toast('Selecione a data de entrega!');
+    toast('Selecione a data de entrega! 📅');
+    dateInput.focus();
     return false;
   }
   const selectedDate = new Date(selectedDateStr);
+  if (isNaN(selectedDate.getTime())) {
+    console.warn('Data inválida fornecida:', selectedDateStr);
+    toast('Formato de data inválido! Use o formato DD/MM/AAAA 📅');
+    dateInput.value = '';
+    dateInput.focus();
+    return false;
+  }
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentHour = now.getHours();
   const minDate = new Date(today);
-  // Se após 16h, data mínima é amanhã
   if (currentHour >= config.delivery.cutoffHour) {
     minDate.setDate(today.getDate() + 1);
   }
   
-  // Normalizar selectedDate para comparar apenas a data
   selectedDate.setHours(0, 0, 0, 0);
   
   console.log(`Validando data: ${selectedDateStr} (Selecionada: ${selectedDate.toLocaleDateString('pt-BR')}, Mínima: ${minDate.toLocaleDateString('pt-BR')})`);
   
-  // Proibir datas anteriores à mínima
   if (selectedDate < minDate) {
-    toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')}.`);
+    toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')} 📅`);
     dateInput.value = '';
+    dateInput.focus();
     return false;
   }
   
-  // Proibir entrega no mesmo dia após 16h
   if (currentHour >= config.delivery.cutoffHour && selectedDate.getTime() === today.getTime()) {
-    toast('Entregas no mesmo dia só até 16h! Escolha amanhã ou depois.');
+    toast('Entregas no mesmo dia só até 16h! Escolha amanhã ou depois. 📅');
     dateInput.value = '';
+    dateInput.focus();
     return false;
   }
   
@@ -506,19 +512,16 @@ function updateDateInput() {
   const dateInput = document.getElementById('date');
   if (!dateInput) {
     console.error('Campo de data (#date) não encontrado');
-    toast('Erro interno: campo de data não encontrado.');
+    toast('Erro interno: campo de data não encontrado. 😕');
     return;
   }
   const now = new Date();
   const currentHour = now.getHours();
   const minDate = new Date();
-  // Normalizar para 00:00:00
-  minDate.setHours(0, 0, 0, 0);
-  // Se após 16h, definir data mínima como amanhã
+  minDate.setHours(0, 0, 0, 0); // Normalizar para 00:00:00
   if (currentHour >= config.delivery.cutoffHour) {
-    minDate.setDate(minDate.getDate() + 1);
+    minDate.setDate(minDate.getDate() + 1); // Após 16h, data mínima é amanhã
   }
-  // Formatar como YYYY-MM-DD
   const minDateStr = minDate.toISOString().split('T')[0];
   dateInput.min = minDateStr;
   console.log(`Data mínima definida: ${minDateStr} (Horário atual: ${now.toLocaleString('pt-BR')})`);
@@ -526,11 +529,19 @@ function updateDateInput() {
   // Limpar valor se for anterior à data mínima
   if (dateInput.value) {
     const selectedDate = new Date(dateInput.value);
+    if (isNaN(selectedDate.getTime())) {
+      console.warn('Data inválida no campo:', dateInput.value);
+      toast('Formato de data inválido! Selecione uma data válida. 📅');
+      dateInput.value = '';
+      dateInput.focus();
+      return;
+    }
     selectedDate.setHours(0, 0, 0, 0);
     if (selectedDate < minDate) {
       console.warn(`Data selecionada (${dateInput.value}) é anterior à mínima (${minDateStr})`);
+      toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')} 📅`);
       dateInput.value = '';
-      toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')}.`);
+      dateInput.focus();
     }
   }
 }
@@ -538,7 +549,7 @@ function updateDateInput() {
 // Validação de Endereço
 function validateAddress() {
   if (!state.address.cep || !state.address.street || !state.address.number || !state.address.neighborhood || !state.address.city || !state.address.state) {
-    toast('Endereço incompleto! Busque o CEP e insira o número.');
+    toast('Endereço incompleto! Busque o CEP e insira o número. 📍');
     return false;
   }
   return true;
@@ -551,7 +562,7 @@ function validateWhatsApp() {
   const whatsapp = whatsappInput.value.replace(/\D/g, '');
   const whatsappRegex = /^\d{10,11}$/;
   if (!whatsappRegex.test(whatsapp)) {
-    toast('Número de WhatsApp inválido! Use o formato (XX) 91234-5678');
+    toast('Número de WhatsApp inválido! Use o formato (XX) 91234-5678 📱');
     return false;
   }
   state.whatsapp = whatsapp;
@@ -565,7 +576,7 @@ function validateName() {
   const name = nameInput.value.trim();
   const nameRegex = /^[A-Za-z\s]{3,}$/;
   if (!nameRegex.test(name)) {
-    toast('Nome completo inválido! Use pelo menos 3 letras.');
+    toast('Nome completo inválido! Use pelo menos 3 letras. 😊');
     return false;
   }
   state.name = name;
@@ -613,7 +624,7 @@ function checkout() {
     pixKeyText.textContent = config.pix.pixKey;
     dataModal.classList.remove('show');
     confirmationModal.classList.add('show');
-    toast('🚚 Dados confirmados! Prossiga para o pagamento.');
+    toast('🚚 Dados confirmados! Prossiga para o pagamento. 💸');
     document.getElementById('data-number').value = '';
     document.getElementById('data-whatsapp').value = '';
     document.getElementById('data-name').value = '';
@@ -626,9 +637,9 @@ function checkout() {
 // Copiar Chave Pix
 function copyPixKey() {
   navigator.clipboard.writeText(config.pix.pixKey).then(() => {
-    toast('Chave Pix copiada!');
+    toast('Chave Pix copiada! 💸');
   }).catch(() => {
-    toast('Erro ao copiar a chave Pix');
+    toast('Erro ao copiar a chave Pix 😕');
   });
 }
 
@@ -675,7 +686,7 @@ function startTimer() {
     time--;
     if (time < 0) {
       time = 10 * 60;
-      toast('Oferta renovada por mais 10 minutos!');
+      toast('Oferta renovada por mais 10 minutos! ⏳');
     }
   }, 1000);
 }
@@ -692,7 +703,7 @@ if (stockEl) {
         setTimeout(() => {
           stockCount = 5;
           stockEl.textContent = `Apenas ${stockCount} unidades disponíveis!`;
-          toast('Estoque reposto! Garanta o seu agora!');
+          toast('Estoque reposto! Garanta o seu agora! 🎉');
         }, 5000);
       }
     }
