@@ -22,8 +22,10 @@ for (let i = 0; i < 160; i++) {
 // Configurar vídeo do hero
 function setHeroVideo() {
   const heroVideo = document.querySelector('#hero-video source');
-  heroVideo.src = videos[0]; // Usa Video01.mp4 para o hero
-  heroVideo.parentElement.load(); // Recarrega o vídeo
+  if (heroVideo) {
+    heroVideo.src = videos[0]; // Usa Video01.mp4 para o hero
+    heroVideo.parentElement.load(); // Recarrega o vídeo
+  }
 }
 
 // Configurar galeria de vídeos
@@ -34,7 +36,7 @@ function setupVideoGallery() {
       const videoCard = document.createElement('div');
       videoCard.className = 'video-card';
       videoCard.innerHTML = `
-        <video autoplay loop playsinline muted id="gallery-video-${index}" data-muted="true">
+        <video autoplay loop playsinline id="gallery-video-${index}" data-muted="true">
           <source src="${videoSrc}" type="video/mp4">
         </video>
         <button class="btn audio-btn" data-video-id="gallery-video-${index}" onclick="toggleAudio('gallery-video-${index}')" aria-label="Ativar áudio do vídeo ${index + 2}" tabindex="0">🔇</button>
@@ -49,6 +51,8 @@ function setupVideoGallery() {
 function toggleAudio(videoId) {
   const video = document.getElementById(videoId);
   const button = document.querySelector(`[data-video-id="${videoId}"]`);
+  if (!video || !button) return;
+
   const isMuted = video.getAttribute('data-muted') === 'true';
 
   // Desmutar todos os outros vídeos
@@ -72,10 +76,49 @@ function toggleAudio(videoId) {
   toast(`Áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]} ${isMuted ? 'ativado' : 'desativado'}`);
 }
 
+// Configurar Intersection Observer para ativar áudio automaticamente
+function setupVideoObserver() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const video = entry.target;
+      const button = document.querySelector(`[data-video-id="${video.id}"]`);
+      if (entry.isIntersecting) {
+        // Ativar áudio do vídeo visível
+        document.querySelectorAll('video').forEach(v => {
+          if (v.id !== video.id) {
+            v.muted = true;
+            v.setAttribute('data-muted', 'true');
+            const btn = document.querySelector(`[data-video-id="${v.id}"]`);
+            if (btn) {
+              btn.textContent = '🔇';
+              btn.setAttribute('aria-label', `Ativar áudio do vídeo ${v.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
+            }
+          }
+        });
+        video.muted = false;
+        video.setAttribute('data-muted', 'false');
+        if (button) {
+          button.textContent = '🔊';
+          button.setAttribute('aria-label', `Desativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
+          toast(`Áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]} ativado automaticamente`);
+        }
+      }
+    });
+  }, {
+    threshold: 0.5 // Ativar quando 50% do vídeo estiver visível
+  });
+
+  // Observar todos os vídeos
+  document.querySelectorAll('video').forEach(video => {
+    observer.observe(video);
+  });
+}
+
 // Chama as funções ao carregar a página
 document.addEventListener('DOMContentLoaded', () => {
   setHeroVideo();
   setupVideoGallery();
+  setupVideoObserver();
 });
 
 // Configurações de Pix
