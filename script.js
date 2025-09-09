@@ -47,7 +47,8 @@ const state = {
     city: '',
     state: ''
   },
-  whatsapp: ''
+  whatsapp: '',
+  name: ''
 };
 
 // Verificar carregamento de imagens
@@ -230,9 +231,43 @@ function setupVideoObserver() {
   document.querySelectorAll('video').forEach(video => observer.observe(video));
 }
 
+// Abrir modal de dados
+function openDataModal() {
+  const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
+  const data = document.getElementById('date')?.value;
+  if (!sabor) {
+    toast('Selecione um sabor antes de continuar!');
+    scrollToEl('#comprar');
+    return;
+  }
+  if (!data || !validateDate()) {
+    toast('Selecione uma data de entrega válida!');
+    scrollToEl('#comprar');
+    return;
+  }
+  if (stockCount === 0) {
+    toast('Estoque esgotado! Aguarde a reposição.');
+    return;
+  }
+  const dataModal = document.getElementById('data-modal');
+  if (dataModal) {
+    dataModal.classList.add('show');
+    // Preencher campos com dados existentes, se houver
+    document.getElementById('data-cep').value = state.address.cep || '';
+    document.getElementById('data-street').value = state.address.street || '';
+    document.getElementById('data-number').value = state.address.number || '';
+    document.getElementById('data-neighborhood').value = state.address.neighborhood || '';
+    document.getElementById('data-city').value = state.address.city || '';
+    document.getElementById('data-state').value = state.address.state || '';
+    document.getElementById('data-whatsapp').value = state.whatsapp || '';
+    document.getElementById('data-name').value = state.name || '';
+    document.getElementById('data-address-input').style.display = state.address.cep ? 'block' : 'none';
+  }
+}
+
 // Buscar endereço pelo CEP
 async function fetchAddress() {
-  const cepInput = document.getElementById('cep');
+  const cepInput = document.getElementById('data-cep');
   if (!cepInput) return;
   const cep = cepInput.value.replace(/\D/g, '');
   const cepRegex = /^\d{8}$/;
@@ -266,26 +301,32 @@ async function fetchAddress() {
     state.address.city = response.localidade;
     state.address.state = response.uf;
 
-    const streetInput = document.getElementById('street');
-    const neighborhoodInput = document.getElementById('neighborhood');
-    const cityInput = document.getElementById('city');
-    const stateInput = document.getElementById('state');
-    const addressInput = document.getElementById('address-input');
-    const cepInputContainer = document.getElementById('cep-input');
+    const streetInput = document.getElementById('data-street');
+    const neighborhoodInput = document.getElementById('data-neighborhood');
+    const cityInput = document.getElementById('data-city');
+    const stateInput = document.getElementById('data-state');
+    const addressInput = document.getElementById('data-address-input');
 
-    if (streetInput && neighborhoodInput && cityInput && stateInput && addressInput && cepInputContainer) {
+    if (streetInput && neighborhoodInput && cityInput && stateInput && addressInput) {
       streetInput.value = response.logradouro;
       neighborhoodInput.value = response.bairro;
       cityInput.value = response.localidade;
       stateInput.value = response.uf;
       addressInput.style.display = 'block';
-      cepInputContainer.style.display = 'none';
-      toast('Endereço carregado! Insira o número.');
+      toast('Endereço carregado! Insira o número, WhatsApp e nome.');
     }
   } catch (error) {
     console.error('Erro ao buscar endereço:', error);
     toast('Erro ao buscar endereço. Tente novamente.');
   }
+}
+
+// Confirmar dados do modal
+function confirmData() {
+  if (!validateAddress()) return;
+  if (!validateWhatsApp()) return;
+  if (!validateName()) return;
+  checkout();
 }
 
 // Abrir modal de compartilhamento
@@ -433,13 +474,11 @@ function validateDate() {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentHour = now.getHours();
   
-  // Se após 16h, proibir entrega no mesmo dia
   if (currentHour >= config.delivery.cutoffHour && selectedDate.getTime() === today.getTime()) {
     toast('Entregas no mesmo dia só até 16h! Escolha amanhã ou depois.');
     dateInput.value = '';
     return false;
   }
-  // Proibir datas passadas
   if (selectedDate < today) {
     toast('Selecione uma data futura!');
     dateInput.value = '';
@@ -459,7 +498,7 @@ function validateAddress() {
 
 // Validação de WhatsApp
 function validateWhatsApp() {
-  const whatsappInput = document.getElementById('whatsapp');
+  const whatsappInput = document.getElementById('data-whatsapp');
   if (!whatsappInput) return false;
   const whatsapp = whatsappInput.value.replace(/\D/g, '');
   const whatsappRegex = /^\d{10,11}$/;
@@ -471,31 +510,26 @@ function validateWhatsApp() {
   return true;
 }
 
+// Validação de Nome Completo
+function validateName() {
+  const nameInput = document.getElementById('data-name');
+  if (!nameInput) return false;
+  const name = nameInput.value.trim();
+  const nameRegex = /^[A-Za-z\s]{3,}$/;
+  if (!nameRegex.test(name)) {
+    toast('Nome completo inválido! Use pelo menos 3 letras.');
+    return false;
+  }
+  state.name = name;
+  return true;
+}
+
 // Checkout
 function checkout() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
   const data = document.getElementById('date')?.value;
   let preco = config.pricing.basePrice;
   const groupCode = state.group.groupCode || '';
-
-  // Validações
-  if (!sabor) {
-    toast('Selecione um sabor');
-    return;
-  }
-  if (!validateDate()) {
-    return;
-  }
-  if (!validateAddress()) {
-    return;
-  }
-  if (!validateWhatsApp()) {
-    return;
-  }
-  if (stockCount === 0) {
-    toast('Estoque esgotado! Aguarde a reposição.');
-    return;
-  }
 
   // Aplicar descontos
   let discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
@@ -511,6 +545,7 @@ function checkout() {
   const summary = `
     <strong>Resumo do Pedido:</strong><br>
     • Sabor: ${sabor}<br>
+    • Nome: ${state.name}<br>
     • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}<br>
     • Frete: Grátis (filial a 2,7 km)<br>
     • Data de Entrega: ${new Date(data).toLocaleDateString('pt-BR')}<br>
@@ -524,16 +559,20 @@ function checkout() {
   const orderSummary = document.getElementById('order-summary');
   const pixKeyText = document.getElementById('pix-key-text');
   const confirmationModal = document.getElementById('confirmation-modal');
-  if (orderSummary && pixKeyText && confirmationModal) {
+  const dataModal = document.getElementById('data-modal');
+  if (orderSummary && pixKeyText && confirmationModal && dataModal) {
     orderSummary.innerHTML = summary;
     pixKeyText.textContent = config.pix.pixKey;
+    dataModal.classList.remove('show');
     confirmationModal.classList.add('show');
-    toast('🚚 Pedido finalizado! Confirme os detalhes e envie o comprovante.');
+    toast('🚚 Dados confirmados! Prossiga para o pagamento.');
     // Limpar campos após checkout
-    document.getElementById('number').value = '';
-    document.getElementById('whatsapp').value = '';
+    document.getElementById('data-number').value = '';
+    document.getElementById('data-whatsapp').value = '';
+    document.getElementById('data-name').value = '';
     state.address.number = '';
     state.whatsapp = '';
+    state.name = '';
   }
 }
 
@@ -545,18 +584,6 @@ function copyPixKey() {
     toast('Erro ao copiar a chave Pix');
   });
 }
-
-// Inicialização
-document.addEventListener('DOMContentLoaded', () => {
-  checkImageLoad();
-  setupSprinkles();
-  setHeroVideo();
-  setupVideoGallery();
-  setupVideoObserver();
-  startTimer();
-  checkUrlForGroupCode();
-  updateDateInput(); // Configurar data mínima
-});
 
 // Configurar data mínima
 function updateDateInput() {
@@ -570,6 +597,18 @@ function updateDateInput() {
   }
   dateInput.min = minDate.toISOString().split('T')[0];
 }
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+  checkImageLoad();
+  setupSprinkles();
+  setHeroVideo();
+  setupVideoGallery();
+  setupVideoObserver();
+  startTimer();
+  checkUrlForGroupCode();
+  updateDateInput();
+});
 
 // Funções utilitárias
 function scrollToEl(sel) {
