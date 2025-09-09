@@ -29,11 +29,6 @@
     .btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
     .btn:active { transform: translateY(0); }
     .btn.secondary { background: #2b211a; color: var(--cream); border: 1px solid #3b2b22; }
-    .btn.audio-btn {
-      padding: clamp(6px, 2vw, 8px); font-size: clamp(0.9rem, 2vw, 1rem); position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6);
-      border-radius: 50%; width: clamp(30px, 8vw, 36px); height: clamp(30px, 8vw, 36px); line-height: 1; transition: background 0.3s ease;
-    }
-    .btn.audio-btn:hover { background: rgba(0,0,0,0.8); }
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     header { position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(160%) blur(10px); background: rgba(15,11,7,0.72); border-bottom: 1px solid rgba(255,255,255,0.08); }
     .nav { display: flex; align-items: center; justify-content: space-between; height: clamp(60px, 10vw, 68px); }
@@ -163,10 +158,9 @@
           </div>
         </div>
         <div class="hero-video">
-          <video autoplay loop playsinline muted id="hero-video" data-muted="true">
+          <video autoplay loop playsinline muted id="hero-video">
             <source src="" type="video/mp4">
           </video>
-          <button class="btn audio-btn" data-video-id="hero-video" aria-controls="hero-video" onclick="toggleAudio('hero-video')" aria-label="Ativar áudio do vídeo principal" tabindex="0">🔇</button>
         </div>
       </div>
     </div>
