@@ -21,7 +21,7 @@ for (let i = 0; i < 160; i++) {
 
 // Configurar vídeo do hero
 function setHeroVideo() {
-  const heroVideo = document.querySelector('.hero-video video source');
+  const heroVideo = document.querySelector('#hero-video source');
   heroVideo.src = videos[0]; // Usa Video01.mp4 para o hero
   heroVideo.parentElement.load(); // Recarrega o vídeo
 }
@@ -30,15 +30,14 @@ function setHeroVideo() {
 function setupVideoGallery() {
   const gallery = document.getElementById('video-gallery');
   if (gallery) {
-    // Adiciona os vídeos 2, 3 e 4 à galeria
     videos.slice(1).forEach((videoSrc, index) => {
-      const videoCard = document.createElement('div'); // Mudei de <a> para <div> para evitar navegação
+      const videoCard = document.createElement('div');
       videoCard.className = 'video-card';
       videoCard.innerHTML = `
-        <video autoplay loop playsinline muted id="gallery-video-${index}">
+        <video autoplay loop playsinline muted id="gallery-video-${index}" data-muted="true">
           <source src="${videoSrc}" type="video/mp4">
         </video>
-        <button class="btn audio-btn" onclick="toggleAudio('gallery-video-${index}')" aria-label="Ativar/Desativar áudio do vídeo ${index + 2}">🔇</button>
+        <button class="btn audio-btn" data-video-id="gallery-video-${index}" onclick="toggleAudio('gallery-video-${index}')" aria-label="Ativar áudio do vídeo ${index + 2}" tabindex="0">🔇</button>
         <p class="mini muted">Vídeo ${index + 2}</p>
       `;
       gallery.appendChild(videoCard);
@@ -49,18 +48,28 @@ function setupVideoGallery() {
 // Alternar áudio do vídeo
 function toggleAudio(videoId) {
   const video = document.getElementById(videoId);
-  const button = video.nextElementSibling; // Botão de áudio
-  if (video.muted) {
-    video.muted = false;
-    button.textContent = '🔊';
-    button.setAttribute('aria-label', `Desativar áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]}`);
-    toast('Áudio ativado');
-  } else {
-    video.muted = true;
-    button.textContent = '🔇';
-    button.setAttribute('aria-label', `Ativar áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]}`);
-    toast('Áudio desativado');
-  }
+  const button = document.querySelector(`[data-video-id="${videoId}"]`);
+  const isMuted = video.getAttribute('data-muted') === 'true';
+
+  // Desmutar todos os outros vídeos
+  document.querySelectorAll('video').forEach(v => {
+    if (v.id !== videoId) {
+      v.muted = true;
+      v.setAttribute('data-muted', 'true');
+      const btn = document.querySelector(`[data-video-id="${v.id}"]`);
+      if (btn) {
+        btn.textContent = '🔇';
+        btn.setAttribute('aria-label', `Ativar áudio do vídeo ${v.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
+      }
+    }
+  });
+
+  // Alternar o estado do vídeo atual
+  video.muted = !isMuted;
+  video.setAttribute('data-muted', !isMuted);
+  button.textContent = isMuted ? '🔊' : '🔇';
+  button.setAttribute('aria-label', `${isMuted ? 'Desativar' : 'Ativar'} áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]}`);
+  toast(`Áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]} ${isMuted ? 'ativado' : 'desativado'}`);
 }
 
 // Chama as funções ao carregar a página
