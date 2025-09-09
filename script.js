@@ -12,7 +12,7 @@ const config = {
   ],
   images: {
     logo: 'Imagens/Logoluci.png',
-    brigadeiro: 'Imagens/Imagem02.jpeg'
+    brigadeiro: 'Imagens/Imagem2.jpeg'
   }
 };
 
