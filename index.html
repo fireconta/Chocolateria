@@ -34,6 +34,7 @@
     }
     .btn.share-btn { background: #25D366; color: #fff; }
     .btn.email-btn { background: #0078D4; color: #fff; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     header { position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(160%) blur(10px); background: rgba(15,11,7,0.72); border-bottom: 1px solid rgba(255,255,255,0.08); }
     .nav { display: flex; align-items: center; justify-content: space-between; height: clamp(60px, 10vw, 68px); }
@@ -147,7 +148,8 @@
     .address-label { display: block; text-align: left; font-weight: 700; margin-bottom: 4px; font-size: clamp(0.9rem, 2vw, 1rem); }
     .highlight { color: var(--gold); font-weight: 900; }
     .cta-text { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--success); font-weight: 700; margin: 10px 0; }
-    #date:invalid, .whatsapp-input:invalid { border: 2px solid var(--danger); }
+    #date:invalid, .whatsapp-input:invalid, .address-input:invalid, .name-input:invalid, .date-input:invalid { border: 2px solid var(--danger); }
+    #form-status { margin: 8px 0; font-weight: 700; }
     @media (max-width: 599px) {
       .modal-content { padding: 10px; }
       .modal-content h3 { font-size: clamp(1.1rem, 2.5vw, 1.3rem); }
@@ -288,13 +290,14 @@
     <div class="modal-content data-modal-content">
       <h3>Insira seus Dados! 🚚</h3>
       <p class="cta-text">Preencha para entrega rápida e personalizada!</p>
+      <p id="form-status" style="margin: 8px 0; font-weight: 700;"></p>
       <div>
         <label class="address-label">Data de Entrega:</label>
         <input id="date" type="date" class="date-input" aria-label="Data de entrega" aria-required="true" />
       </div>
       <div>
         <label class="address-label">CEP:</label>
-        <input id="data-cep" type="text" class="address-input" placeholder="12345-678" aria-label="CEP" aria-required="true" />
+        <input id="data-cep" type="text" class="address-input" placeholder="12345-678" maxlength="9" aria-label="CEP" aria-required="true" />
         <button class="btn" onclick="fetchAddress()" style="padding:8px 16px;margin:6px 0" aria-label="Buscar endereço pelo CEP">Buscar</button>
       </div>
       <div id="data-address-input" style="display:none;">
@@ -311,14 +314,14 @@
       </div>
       <div>
         <label class="address-label">WhatsApp:</label>
-        <input id="data-whatsapp" type="tel" class="whatsapp-input" placeholder="(XX) XXXXX-XXXX" aria-label="Número do WhatsApp" aria-required="true" />
+        <input id="data-whatsapp" type="tel" class="whatsapp-input" placeholder="(XX) XXXXX-XXXX" maxlength="15" aria-label="Número do WhatsApp" aria-required="true" />
       </div>
       <div>
         <label class="address-label">Nome Completo:</label>
         <input id="data-name" type="text" class="name-input" placeholder="Ex.: Maria Silva" aria-label="Nome completo" aria-required="true" />
       </div>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
-        <button class="btn" onclick="confirmData()">Confirmar Dados</button>
+        <button class="btn" id="confirm-data-btn" onclick="confirmData()" disabled style="opacity:0.6;cursor:not-allowed;">Confirmar Dados</button>
         <button class="btn secondary" onclick="closeModal('data-modal')" aria-label="Fechar modal de dados">Cancelar</button>
       </div>
     </div>
