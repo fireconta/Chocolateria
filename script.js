@@ -32,17 +32,34 @@ function setupVideoGallery() {
   if (gallery) {
     // Adiciona os vídeos 2, 3 e 4 à galeria
     videos.slice(1).forEach((videoSrc, index) => {
-      const videoCard = document.createElement('a');
+      const videoCard = document.createElement('div'); // Mudei de <a> para <div> para evitar navegação
       videoCard.className = 'video-card';
-      videoCard.href = '#';
       videoCard.innerHTML = `
-        <video autoplay muted loop playsinline>
+        <video autoplay loop playsinline muted id="gallery-video-${index}">
           <source src="${videoSrc}" type="video/mp4">
         </video>
+        <button class="btn audio-btn" onclick="toggleAudio('gallery-video-${index}')" aria-label="Ativar/Desativar áudio do vídeo ${index + 2}">🔇</button>
         <p class="mini muted">Vídeo ${index + 2}</p>
       `;
       gallery.appendChild(videoCard);
     });
+  }
+}
+
+// Alternar áudio do vídeo
+function toggleAudio(videoId) {
+  const video = document.getElementById(videoId);
+  const button = video.nextElementSibling; // Botão de áudio
+  if (video.muted) {
+    video.muted = false;
+    button.textContent = '🔊';
+    button.setAttribute('aria-label', `Desativar áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]}`);
+    toast('Áudio ativado');
+  } else {
+    video.muted = true;
+    button.textContent = '🔇';
+    button.setAttribute('aria-label', `Ativar áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]}`);
+    toast('Áudio desativado');
   }
 }
 
