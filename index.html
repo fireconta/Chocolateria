@@ -38,7 +38,7 @@
     header { position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(160%) blur(10px); background: rgba(15,11,7,0.72); border-bottom: 1px solid rgba(255,255,255,0.08); }
     .nav { display: flex; align-items: center; justify-content: space-between; height: clamp(60px, 10vw, 68px); }
     .brand { display: flex; align-items: center; gap: 0.7rem; }
-    .logo { width: clamp(32px, 6vw, 36px); height: clamp(32px, 6vw, 36px); border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--milk), var(--choco)); box-shadow: inset 0 0 14px rgba(0,0,0,0.4), 0 6px 20px rgba(0,0,0,0.3); }
+    .logo { width: clamp(32px, 6vw, 36px); height: clamp(32px, 6vw, 36px); border-radius: 50%; object-fit: cover; box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
     .brand h1 { font-size: clamp(1rem, 2vw, 1.05rem); letter-spacing: 0.06em; margin: 0; font-weight: 800; }
     .hero { position: relative; padding: clamp(40px, 8vw, 60px) 0 clamp(30px, 6vw, 40px); background: radial-gradient(80% 60% at 50% 0%, rgba(212,178,110,0.15), transparent 60%), radial-gradient(50% 40% at 80% 20%, rgba(139,90,60,0.16), transparent 60%), var(--bg); }
     .heroInner { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 4vw, 36px); align-items: center; }
@@ -57,7 +57,7 @@
     .hero-video { position: relative; max-width: clamp(40%, 15vw, 50%); max-height: clamp(40%, 15vw, 50%); border-radius: 16px; border: 2px solid var(--gold); box-shadow: 0 8px 24px rgba(0,0,0,0.5); overflow: hidden; z-index: 2; display: grid; place-items: center; }
     .hero-video video { width: 100%; height: 100%; object-fit: cover; }
     .section { padding: clamp(40px, 8vw, 60px) 0; border-top: 1px solid rgba(255,255,255,0.06); background: linear-gradient(180deg, transparent, rgba(255,255,255,0.02)); }
-    .grid { display: grid; gap: clamp(60px, 8vw, 80px); } /* Maior distância entre vídeos */
+    .grid { display: grid; gap: clamp(60px, 8vw, 80px); }
     @media (min-width: 900px) { 
       .grid.cols-3 { grid-template-columns: repeat(3, 1fr); } 
       .grid.cols-2 { grid-template-columns: repeat(2, 1fr); } 
@@ -80,7 +80,7 @@
     .list { margin: 10px 0 0; padding: 0 0 0 18px; }
     .list li { margin: 0.4rem 0; }
     .product { display: flex; gap: 16px; align-items: center; }
-    .thumb { width: clamp(60px, 10vw, 72px); height: clamp(60px, 10vw, 72px); border-radius: 16px; background: linear-gradient(160deg, #3b271b, #28170f); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); }
+    .thumb { width: clamp(60px, 10vw, 72px); height: clamp(60px, 10vw, 72px); border-radius: 16px; object-fit: cover; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); }
     .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 18px 0; }
     .faq details { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
     .faq summary { cursor: pointer; font-weight: 700; }
@@ -95,16 +95,16 @@
       gap: 10px; 
       text-decoration: none; 
       transition: transform 0.2s ease; 
-      border: 3px solid var(--gold); /* Moldura dourada */
+      border: 3px solid var(--gold); 
       border-radius: 20px; 
       overflow: hidden; 
       position: relative; 
-      background: var(--bg-soft); /* Fundo suave para a moldura */
-      padding: 10px; /* Espaço interno para a moldura */
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5); /* Sombra para profundidade */
+      background: var(--bg-soft); 
+      padding: 10px; 
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); 
     }
     .video-card:hover { transform: translateY(-4px); }
-    .video-card video { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 12px; } /* Cantos arredondados no vídeo */
+    .video-card video { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 12px; }
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
     .modal.show { display: flex; }
     .modal-content { background: var(--bg-soft); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: clamp(16px, 3vw, 24px); max-width: clamp(400px, 90%, 500px); width: 90%; text-align: center; }
@@ -125,7 +125,10 @@
 <body>
   <header>
     <div class="container nav">
-      <div class="brand"><div class="logo" aria-hidden="true"></div><h1>Chocolatria</h1></div>
+      <div class="brand">
+        <img src="imagens/logoluci.png" alt="Logo Chocolatria" class="logo" aria-hidden="true">
+        <h1>Chocolatria</h1>
+      </div>
       <nav style="display:flex;gap:clamp(10px, 2vw, 14px);align-items:center">
         <a href="#sabores" class="mini">Sabores</a>
         <a href="#como-fazer" class="mini">Como funciona</a>
@@ -176,7 +179,7 @@
       </div>
       <div class="card" style="display:grid;gap:16px">
         <div class="product">
-          <div class="thumb" aria-hidden="true"></div>
+          <img src="imagens/imagem2.png" alt="Brigadeiro Gigante" class="thumb" aria-hidden="true">
           <div style="flex:1">
             <strong>Brigadeiro Gigante</strong>
             <div class="mini muted">1,2 kg • Serve 10–12 pessoas • Embalagem presente</div>
