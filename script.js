@@ -113,7 +113,7 @@ function setupVideoGallery() {
       <video autoplay loop playsinline muted id="${videoId}" data-muted="true">
         <source src="${videoSrc}" type="video/mp4">
       </video>
-      <button class="btn audio-btn" data-video-id="${videoId}" aria-controls="${videoId}" onclick="toggleAudio('${videoId}')" aria-label="Ativar áudio do vídeo ${index + 2}">🔇</button>
+      <button class="btn audio-btn" data-video-id="${videoId}" aria-controls="${videoId}" onclick="toggleAudio('${videoId}')" aria-label="Ativar áudio do vídeo ${index + 2}" tabindex="0">🔇</button>
       <p class="mini muted">Vídeo ${index + 2}</p>
     `;
     gallery.appendChild(videoCard);
