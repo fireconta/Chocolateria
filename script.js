@@ -1,5 +1,10 @@
-const pixKey = "sua-chave-pix-aqui@example.com";
-const pixQrCodeUrl = "https://placehold.co/200x200?text=QR+Code+Pix";
+// Lista de caminhos dos vídeos na pasta Videos
+const videos = [
+  'Videos/Video01.mp4',
+  'Videos/Video02.mp4',
+  'Videos/Video03.mp4',
+  'Videos/Video04.mp4'
+];
 
 // Granulado animado
 const spr = document.getElementById('sprinkles');
@@ -13,6 +18,43 @@ for (let i = 0; i < 160; i++) {
   el.style.opacity = Math.random() * 0.35 + 0.65;
   spr.appendChild(el);
 }
+
+// Configurar vídeo do hero
+function setHeroVideo() {
+  const heroVideo = document.querySelector('.hero-video video source');
+  heroVideo.src = videos[0]; // Usa Video01.mp4 para o hero
+  heroVideo.parentElement.load(); // Recarrega o vídeo
+}
+
+// Configurar galeria de vídeos
+function setupVideoGallery() {
+  const gallery = document.getElementById('video-gallery');
+  if (gallery) {
+    // Adiciona os vídeos 2, 3 e 4 à galeria
+    videos.slice(1).forEach((videoSrc, index) => {
+      const videoCard = document.createElement('a');
+      videoCard.className = 'video-card';
+      videoCard.href = '#';
+      videoCard.innerHTML = `
+        <video autoplay muted loop playsinline>
+          <source src="${videoSrc}" type="video/mp4">
+        </video>
+        <p class="mini muted">Vídeo ${index + 2}</p>
+      `;
+      gallery.appendChild(videoCard);
+    });
+  }
+}
+
+// Chama as funções ao carregar a página
+document.addEventListener('DOMContentLoaded', () => {
+  setHeroVideo();
+  setupVideoGallery();
+});
+
+// Configurações de Pix
+const pixKey = "sua-chave-pix-aqui@example.com";
+const pixQrCodeUrl = "https://placehold.co/200x200?text=QR+Code+Pix";
 
 // Funções utilitárias
 function scrollToEl(sel) {
