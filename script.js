@@ -119,10 +119,11 @@ document.addEventListener('DOMContentLoaded', () => {
   setHeroVideo();
   setupVideoGallery();
   setupVideoObserver();
+  checkLocation(); // Inicializa o estado do campo de CEP
 });
 
 // Configurações de Pix
-const pixKey = "agora me deve o caneco kkkk!";
+const pixKey = "sua-chave-pix-aqui@example.com";
 const pixQrCodeUrl = "https://placehold.co/200x200?text=QR+Code+Pix";
 
 // Funções utilitárias
@@ -209,14 +210,14 @@ function checkout() {
   const data = document.getElementById('date').value || 'a combinar';
   const preco = document.getElementById('price').textContent;
   const cep = document.getElementById('cep')?.value || '';
-  const freteMessage = entrega === 'Entrega' ? 'Frete: Grátis (filial a 2,7 km)' : 'Retirada no ateliê';
+  const freteMessage = entrega === 'Entrega' && cep ? 'Frete: Grátis (filial a 2,7 km)' : entrega === 'Entrega' ? 'Informe o CEP' : 'Retirada no ateliê';
 
   if (!sabor) {
     toast('Selecione um sabor');
     return;
   }
-  if (entrega === 'Entrega' && !document.getElementById('frete-message').textContent) {
-    toast('Permita geolocalização ou insira CEP');
+  if (entrega === 'Entrega' && !cep) {
+    toast('Por favor, insira o CEP para entrega');
     return;
   }
   if (data !== 'a combinar' && !validateDate()) {
