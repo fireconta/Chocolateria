@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Configurações de Pix
-const pixKey = "sua-chave-pix-aqui@example.com";
+const pixKey = "agora me deve o caneco kkkk!";
 const pixQrCodeUrl = "https://placehold.co/200x200?text=QR+Code+Pix";
 
 // Funções utilitárias
