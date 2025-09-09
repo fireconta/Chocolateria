@@ -29,7 +29,11 @@
     .btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 12px 24px rgba(0,0,0,.5); }
     .btn:active { transform: translateY(0); }
     .btn.secondary { background: #2b211a; color: var(--cream); border: 1px solid #3b2b22; }
-    .btn.audio-btn { padding: 8px; font-size: 1rem; position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,.5); }
+    .btn.audio-btn {
+      padding: 8px; font-size: 1rem; position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,.6);
+      border-radius: 50%; width: 36px; height: 36px; line-height: 1; transition: background .3s ease;
+    }
+    .btn.audio-btn:hover { background: rgba(0,0,0,.8); }
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     header { position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(160%) blur(10px); background: rgba(15,11,7,.72); border-bottom: 1px solid rgba(255,255,255,.08); }
     .nav { display: flex; align-items: center; justify-content: space-between; height: 68px; }
@@ -44,18 +48,22 @@
     .stats { display: flex; gap: 22px; flex-wrap: wrap; margin: 24px 0; }
     .stat { padding: 10px 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; }
     .price { font-size: 2rem; font-weight: 900; color: var(--gold); }
-    .imgWrap { position: relative; aspect-ratio: 1/1; border-radius: 28px; background: linear-gradient(145deg, #1b120d, #100b08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 30px 60px rgba(0,0,0,.5); overflow: hidden; }
+    .imgWrap { position: relative; aspect-ratio: 1/1; border-radius: 28px; background: linear-gradient(145deg, #1b120d, #100b08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 30px 60px rgba(0,0,0,.5); overflow: hidden; display: grid; place-items: center; }
     .bigBrigadeiro { position: absolute; inset: 0; display: grid; place-items: center; }
     .choco { width: 78%; height: 78%; border-radius: 50%; background: radial-gradient(circle at 45% 35%, #3b2318, #150c07 70%); box-shadow: inset 0 -35px 60px rgba(0,0,0,.6), 0 20px 80px rgba(0,0,0,.55); position: relative; overflow: hidden; }
     .sprinkles { position: absolute; inset: 0; }
     .sprinkles i { position: absolute; width: 10px; height: 3px; border-radius: 2px; background: #6b4a3c; transform: rotate(var(--r)) translate(var(--tx), var(--ty)); }
     .cup { position: absolute; bottom: -14%; width: 88%; height: 38%; left: 50%; transform: translateX(-50%); background: repeating-linear-gradient(90deg, #20150f, #20150f 8px, #2b1a13 8px, #2b1a13 18px); clip-path: polygon(8% 0, 92% 0, 100% 100%, 0% 100%); border-top: 2px solid #3f2a20; filter: drop-shadow(0 -6px 10px rgba(0,0,0,.5)); }
-    .hero-video { position: absolute; top: 10%; right: 10%; width: 50%; aspect-ratio: 1/1; border-radius: 16px; border: 2px solid var(--gold); box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; z-index: 10; position: relative; }
+    .hero-video { position: relative; max-width: 50%; max-height: 50%; border-radius: 16px; border: 2px solid var(--gold); box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; z-index: 10; display: grid; place-items: center; }
     .hero-video video { width: 100%; height: 100%; object-fit: cover; }
     .section { padding: 60px 0; border-top: 1px solid rgba(255,255,255,.06); background: linear-gradient(180deg, transparent, rgba(255,255,255,.02)); }
     .grid { display: grid; gap: 26px; }
     @media (min-width: 900px) { .grid.cols-3 { grid-template-columns: repeat(3, 1fr); } .grid.cols-2 { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 900px) { .heroInner { grid-template-columns: 1fr; } .hero-video { width: 80%; top: 5%; right: 10%; } }
+    @media (max-width: 900px) {
+      .heroInner { grid-template-columns: 1fr; }
+      .hero-video { max-width: 80%; max-height: 80%; margin: 0 auto; }
+      .imgWrap { margin-top: 20px; }
+    }
     .card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 20px; padding: 22px; box-shadow: 0 12px 30px rgba(0,0,0,.35); }
     .badge { display: inline-block; background: rgba(213,178,110,.18); border: 1px solid rgba(213,178,110,.35); color: var(--gold); padding: 6px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; letter-spacing: .04em; }
     .muted { opacity: .8; }
@@ -91,12 +99,13 @@
     .stock-alert { color: var(--danger); font-weight: 700; margin: 10px 0; font-size: 1.1rem; transition: all .4s ease; }
     @media (max-width: 600px) {
       .btn { padding: 12px 20px; font-size: 1rem; }
-      .btn.audio-btn { padding: 6px; font-size: 0.9rem; }
+      .btn.audio-btn { padding: 6px; font-size: 0.9rem; width: 30px; height: 30px; }
       .headline { font-size: clamp(1.8rem, 3.5vw, 2.5rem); }
       .sub { font-size: 1rem; }
-      .hero-video { width: 70%; top: 5%; right: 15%; }
+      .hero-video { max-width: 70%; max-height: 70%; margin: 0 auto; }
       .testimonials { flex-direction: column; align-items: center; }
       .testimonial-card { max-width: 100%; }
+      .grid.cols-3 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -138,10 +147,10 @@
           </div>
         </div>
         <div class="hero-video">
-          <video autoplay loop playsinline muted id="hero-video">
+          <video autoplay loop playsinline muted id="hero-video" data-muted="true">
             <source src="" type="video/mp4">
           </video>
-          <button class="btn audio-btn" onclick="toggleAudio('hero-video')" aria-label="Ativar/Desativar áudio do vídeo principal">🔇</button>
+          <button class="btn audio-btn" data-video-id="hero-video" onclick="toggleAudio('hero-video')" aria-label="Ativar áudio do vídeo principal" tabindex="0">🔇</button>
         </div>
       </div>
     </div>
