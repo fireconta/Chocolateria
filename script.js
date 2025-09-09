@@ -22,11 +22,16 @@ const config = {
   },
   pricing: {
     basePrice: 189.90,
-    standardDiscount: 0.1 // 10% OFF padrão
+    standardDiscount: 0.1, // 10% OFF padrão
+    standardDiscountValue: 18.99, // R$ 18,99
+    groupDiscountValue: 17.09 // R$ 17,09 (10% sobre R$ 170,91)
+  },
+  delivery: {
+    cutoffHour: 16 // 16h para entrega no mesmo dia
   }
 };
 
-// Estado do grupo e endereço
+// Estado
 const state = {
   group: {
     groupCode: null,
@@ -41,7 +46,8 @@ const state = {
     neighborhood: '',
     city: '',
     state: ''
-  }
+  },
+  whatsapp: ''
 };
 
 // Verificar carregamento de imagens
@@ -235,9 +241,8 @@ async function fetchAddress() {
     return;
   }
 
-  // Simulação de consulta à API de CEP (ex.: ViaCEP)
   try {
-    // Para testes, simulo um endereço. Em produção, use: fetch(`https://viacep.com.br/ws/${cep}/json/`)
+    // Simulação de consulta à API ViaCEP
     const response = {
       cep: cep,
       logradouro: 'Rua Exemplo',
@@ -247,7 +252,7 @@ async function fetchAddress() {
       erro: false
     };
 
-    // Em produção, descomente:
+    // Em produção: 
     // const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`).then(res => res.json());
 
     if (response.erro) {
@@ -267,18 +272,14 @@ async function fetchAddress() {
     const stateInput = document.getElementById('state');
     const addressInput = document.getElementById('address-input');
     const cepInputContainer = document.getElementById('cep-input');
-    const freteMessage = document.getElementById('frete-message');
-    const locationMessage = document.getElementById('location-message');
 
-    if (streetInput && neighborhoodInput && cityInput && stateInput && addressInput && cepInputContainer && freteMessage && locationMessage) {
+    if (streetInput && neighborhoodInput && cityInput && stateInput && addressInput && cepInputContainer) {
       streetInput.value = response.logradouro;
       neighborhoodInput.value = response.bairro;
       cityInput.value = response.localidade;
       stateInput.value = response.uf;
       addressInput.style.display = 'block';
       cepInputContainer.style.display = 'none';
-      freteMessage.textContent = 'Frete: Grátis (filial a 2,7 km)';
-      locationMessage.style.display = 'block';
       toast('Endereço carregado! Insira o número.');
     }
   } catch (error) {
@@ -302,7 +303,7 @@ function sharePrivateGroup() {
   state.group.groupCode = groupCode;
   state.group.privateShared = true;
   const shareUrl = `${config.share.baseUrl}?ref=${groupCode}`;
-  const message = `Junte-se ao meu grupo para comprar o Brigadeiro Gigante com 10% OFF extra via Pix! Use o código ${groupCode}: ${shareUrl}`;
+  const message = `Junte-se ao meu grupo para comprar o Brigadeiro Gigante com 10% OFF extra (R$ 17,09)! Use o código ${groupCode}: ${shareUrl}`;
   
   if (navigator.share) {
     navigator.share({
@@ -352,7 +353,7 @@ function shareViaEmail() {
   state.group.privateShared = true;
   const shareUrl = `${config.share.baseUrl}?ref=${groupCode}`;
   const subject = 'Convite: Brigadeiro Gigante com 10% OFF!';
-  const body = `Junte-se ao meu grupo para comprar o Brigadeiro Gigante com 10% OFF extra via Pix! Use o código ${groupCode}: ${shareUrl}`;
+  const body = `Junte-se ao meu grupo para comprar o Brigadeiro Gigante com 10% OFF extra (R$ 17,09)! Use o código ${groupCode}: ${shareUrl}`;
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   toast('Convite enviado por e-mail!');
   updateGroupProgress();
@@ -401,7 +402,7 @@ function updateGroupProgress() {
     const status = state.group.privateShared && state.group.publicShared ? 'Completo' : 'Pendente';
     progressEl.innerHTML = `Grupo: ${state.group.groupSize}/${config.share.groupDiscountThreshold} pessoas | Status: ${status}`;
     if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
-      toast('Desconto de 10% extra aplicado para o grupo!');
+      toast('Desconto de 10% extra (R$ 17,09) aplicado para o grupo!');
     }
   }
 }
@@ -423,10 +424,22 @@ function checkUrlForGroupCode() {
 // Validação de Data
 function validateDate() {
   const dateInput = document.getElementById('date');
-  if (!dateInput) return false;
+  if (!dateInput || !dateInput.value) {
+    toast('Selecione a data de entrega!');
+    return false;
+  }
   const selectedDate = new Date(dateInput.value);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const currentHour = now.getHours();
+  
+  // Se após 16h, proibir entrega no mesmo dia
+  if (currentHour >= config.delivery.cutoffHour && selectedDate.getTime() === today.getTime()) {
+    toast('Entregas no mesmo dia só até 16h! Escolha amanhã ou depois.');
+    dateInput.value = '';
+    return false;
+  }
+  // Proibir datas passadas
   if (selectedDate < today) {
     toast('Selecione uma data futura!');
     dateInput.value = '';
@@ -437,24 +450,32 @@ function validateDate() {
 
 // Validação de Endereço
 function validateAddress() {
-  if (state.address.cep && !state.address.number) {
-    toast('Por favor, insira o número do endereço!');
+  if (!state.address.cep || !state.address.street || !state.address.number || !state.address.neighborhood || !state.address.city || !state.address.state) {
+    toast('Endereço incompleto! Busque o CEP e insira o número.');
     return false;
   }
-  if (!state.address.cep || !state.address.street || !state.address.neighborhood || !state.address.city || !state.address.state) {
-    toast('Endereço incompleto! Busque o CEP novamente.');
+  return true;
+}
+
+// Validação de WhatsApp
+function validateWhatsApp() {
+  const whatsappInput = document.getElementById('whatsapp');
+  if (!whatsappInput) return false;
+  const whatsapp = whatsappInput.value.replace(/\D/g, '');
+  const whatsappRegex = /^\d{10,11}$/;
+  if (!whatsappRegex.test(whatsapp)) {
+    toast('Número de WhatsApp inválido! Use o formato (XX) 91234-5678');
     return false;
   }
+  state.whatsapp = whatsapp;
   return true;
 }
 
 // Checkout
 function checkout() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
-  const entrega = document.querySelector('input[name="retirada"]:checked')?.value;
-  const data = document.getElementById('date')?.value || 'a combinar';
+  const data = document.getElementById('date')?.value;
   let preco = config.pricing.basePrice;
-  const numberInput = document.getElementById('number');
   const groupCode = state.group.groupCode || '';
 
   // Validações
@@ -462,10 +483,13 @@ function checkout() {
     toast('Selecione um sabor');
     return;
   }
-  if (entrega === 'Entrega' && !validateAddress()) {
+  if (!validateDate()) {
     return;
   }
-  if (data !== 'a combinar' && !validateDate()) {
+  if (!validateAddress()) {
+    return;
+  }
+  if (!validateWhatsApp()) {
     return;
   }
   if (stockCount === 0) {
@@ -474,28 +498,27 @@ function checkout() {
   }
 
   // Aplicar descontos
-  let discountText = 'Desconto: 10% OFF aplicado!';
+  let discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
   preco = preco * (1 - config.pricing.standardDiscount); // 10% OFF padrão
+  let groupDiscountApplied = false;
   if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
     preco = preco * (1 - config.share.groupDiscountRate); // 10% OFF extra
-    discountText = 'Desconto: 10% OFF + 10% OFF extra (grupo) aplicado!';
+    groupDiscountApplied = true;
+    discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% OFF extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
   }
 
   // Resumo do pedido
-  const addressSummary = entrega === 'Entrega' ? `
-    • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}
-    • Frete: Grátis (filial a 2,7 km)
-  ` : '• Retirada no ateliê';
-  
   const summary = `
     <strong>Resumo do Pedido:</strong><br>
     • Sabor: ${sabor}<br>
-    • Opção: ${entrega}<br>
-    ${addressSummary}<br>
-    • Data: ${data}<br>
+    • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}<br>
+    • Frete: Grátis (filial a 2,7 km)<br>
+    • Data de Entrega: ${new Date(data).toLocaleDateString('pt-BR')}<br>
+    • WhatsApp: ${state.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}<br>
     • Preço: R$ ${preco.toFixed(2).replace('.', ',')}<br>
     ${groupCode ? '• Código do Grupo: ' + groupCode + '<br>' : ''}
-    • <strong>${discountText}</strong>
+    • <strong>${discountText}</strong><br>
+    • <strong class="highlight">Feito sob encomenda após pagamento!</strong>
   `;
   
   const orderSummary = document.getElementById('order-summary');
@@ -505,8 +528,12 @@ function checkout() {
     orderSummary.innerHTML = summary;
     pixKeyText.textContent = config.pix.pixKey;
     confirmationModal.classList.add('show');
-    toast('Pedido finalizado! Confirme os detalhes.');
-    if (numberInput) numberInput.value = ''; // Limpa número após checkout
+    toast('🚚 Pedido finalizado! Confirme os detalhes e envie o comprovante.');
+    // Limpar campos após checkout
+    document.getElementById('number').value = '';
+    document.getElementById('whatsapp').value = '';
+    state.address.number = '';
+    state.whatsapp = '';
   }
 }
 
@@ -519,31 +546,6 @@ function copyPixKey() {
   });
 }
 
-// Mostrar/Esconder Inputs de Localização
-function checkLocation() {
-  const entrega = document.querySelector('input[name="retirada"]:checked')?.value;
-  const cepInput = document.getElementById('cep-input');
-  const addressInput = document.getElementById('address-input');
-  const locationMessage = document.getElementById('location-message');
-  if (cepInput && addressInput && locationMessage) {
-    cepInput.style.display = entrega === 'Entrega' ? 'block' : 'none';
-    addressInput.style.display = entrega === 'Entrega' && state.address.cep ? 'block' : 'none';
-    locationMessage.style.display = entrega === 'Entrega' && state.address.cep ? 'block' : 'none';
-  }
-}
-
-function hideLocationInputs() {
-  const cepInput = document.getElementById('cep-input');
-  const addressInput = document.getElementById('address-input');
-  const locationMessage = document.getElementById('location-message');
-  if (cepInput && addressInput && locationMessage) {
-    cepInput.style.display = 'none';
-    addressInput.style.display = 'none';
-    locationMessage.style.display = 'none';
-    state.address = { cep: '', street: '', number: '', neighborhood: '', city: '', state: '' }; // Resetar endereço
-  }
-}
-
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
   checkImageLoad();
@@ -551,10 +553,23 @@ document.addEventListener('DOMContentLoaded', () => {
   setHeroVideo();
   setupVideoGallery();
   setupVideoObserver();
-  checkLocation();
   startTimer();
   checkUrlForGroupCode();
+  updateDateInput(); // Configurar data mínima
 });
+
+// Configurar data mínima
+function updateDateInput() {
+  const dateInput = document.getElementById('date');
+  if (!dateInput) return;
+  const now = new Date();
+  const currentHour = now.getHours();
+  const minDate = new Date();
+  if (currentHour >= config.delivery.cutoffHour) {
+    minDate.setDate(now.getDate() + 1); // Próximo dia após 16h
+  }
+  dateInput.min = minDate.toISOString().split('T')[0];
+}
 
 // Funções utilitárias
 function scrollToEl(sel) {
