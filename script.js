@@ -265,7 +265,7 @@ function openDataModal() {
   }
 }
 
-// Buscar endereço pelo CEP
+// Buscar endereço pelo CEP (usando API ViaCEP)
 async function fetchAddress() {
   const cepInput = document.getElementById('data-cep');
   if (!cepInput) return;
@@ -277,29 +277,19 @@ async function fetchAddress() {
   }
 
   try {
-    // Simulação de consulta à API ViaCEP
-    const response = {
-      cep: cep,
-      logradouro: 'Rua Exemplo',
-      bairro: 'Bairro Exemplo',
-      localidade: 'São Paulo',
-      uf: 'SP',
-      erro: false
-    };
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const data = await response.json();
 
-    // Em produção: 
-    // const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`).then(res => res.json());
-
-    if (response.erro) {
+    if (data.erro) {
       toast('CEP não encontrado!');
       return;
     }
 
     state.address.cep = cep;
-    state.address.street = response.logradouro;
-    state.address.neighborhood = response.bairro;
-    state.address.city = response.localidade;
-    state.address.state = response.uf;
+    state.address.street = data.logradouro || '';
+    state.address.neighborhood = data.bairro || '';
+    state.address.city = data.localidade || '';
+    state.address.state = data.uf || '';
 
     const streetInput = document.getElementById('data-street');
     const neighborhoodInput = document.getElementById('data-neighborhood');
@@ -308,10 +298,10 @@ async function fetchAddress() {
     const addressInput = document.getElementById('data-address-input');
 
     if (streetInput && neighborhoodInput && cityInput && stateInput && addressInput) {
-      streetInput.value = response.logradouro;
-      neighborhoodInput.value = response.bairro;
-      cityInput.value = response.localidade;
-      stateInput.value = response.uf;
+      streetInput.value = data.logradouro || '';
+      neighborhoodInput.value = data.bairro || '';
+      cityInput.value = data.localidade || '';
+      stateInput.value = data.uf || '';
       addressInput.style.display = 'block';
       toast('Endereço carregado! Insira o número, WhatsApp e nome.');
     }
@@ -622,6 +612,7 @@ function updateDateInput() {
     selectedDate.setHours(0, 0, 0, 0);
     if (selectedDate < minDate) {
       dateInput.value = '';
+      toast('Data inválida selecionada! Escolha uma data válida.');
     }
   }
 }
