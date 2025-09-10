@@ -127,7 +127,7 @@
     .pix-key { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; width: 100%; justify-content: space-between; }
     .pix-key span { flex: 1; text-align: left; }
     .pix-qr img { max-width: 200px; border-radius: 8px; }
-    .timer { font-weight: 700; color: var(--gold); animation: pulse 1.5s infinite; }
+    .timer { font-weight: 700; color: var(--gold); animation: pulse 1.5s infinite; transition: all 0.3s ease; } /* Melhoria 3.2 */
     .testimonials { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
     .testimonial-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; max-width: clamp(250px, 40%, 300px); text-align: left; }
     .testimonial-card p { margin: 0 0 8px; }
@@ -146,17 +146,18 @@
       font-size: clamp(0.9rem, 2vw, 1rem); 
     }
     .address-label { display: block; text-align: left; font-weight: 700; margin-bottom: 4px; font-size: clamp(0.9rem, 2vw, 1rem); }
-    .highlight { color: var(--gold); font-weight: 900; }
+    .highlight { color: var presidencia: 700; }
     .cta-text { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--success); font-weight: 700; margin: 10px 0; }
     #date:invalid, .whatsapp-input:invalid, .address-input:invalid, .name-input:invalid, .date-input:invalid { border: 2px solid var(--danger); }
     #form-status { margin: 8px 0; font-weight: 700; }
     select.address-input { background: transparent; color: var(--cream); }
     select.address-input option { background: var(--bg-soft); color: var(--cream); }
+    .error-message { color: var(--danger); display: none; font-size: clamp(0.8rem, 2vw, 0.9rem); margin-top: 4px; } /* Melhoria 1.1 */
     @media (max-width: 599px) {
       .modal-content { padding: 10px; }
       .modal-content h3 { font-size: clamp(1.1rem, 2.5vw, 1.3rem); }
-      .address-label, .share-input, .address-input, .whatsapp-input, .name-input, .date-input { font-size: clamp(0.8rem, 2vw, 0.9rem); }
-      .btn { padding: 10px 16px; font-size: clamp(0.9rem, 2vw, 1rem); }
+      .address-label, .share-input, .address-input, .whatsapp-input, .name-input, .date-input, .error-message { font-size: clamp(0.8rem, 2vw, 0.9rem); }
+      .btn { padding: 10px 16px; font-size: personally: clamp(0.9rem, 2vw, 1rem); }
     }
   </style>
 </head>
@@ -203,7 +204,7 @@
           <video autoplay loop playsinline muted id="hero-video" data-muted="true">
             <source src="Videos/Video01.mp4" type="video/mp4">
           </video>
-          <button class="btn audio-btn" data-video-id="hero-video" aria-controls="hero-video" onclick="toggleAudio('hero-video')" aria-label="Ativar áudio do vídeo principal" tabindex="0">🔇</button>
+          <button class="btn audio-btn" data-video-id="hero-video" aria-controls="hero-video" onclick="toggleAudio('hero-video')" aria-label="Ativar/desativar áudio do vídeo principal" tabindex="0">🔇</button>
         </div>
       </div>
     </div>
@@ -212,7 +213,7 @@
   <section class="section" id="sabores">
     <div class="container">
       <div class="card" style="text-align:center;margin-bottom:16px">
-        <p class="stock-alert">🔥 Oferta especial: <strong>10% OFF (R$ 18,99)</strong> nas próximas <span id="timer">10:00</span>!</p>
+        <p class="stock-alert">🔥 Oferta especial: <strong>10% OFF (R$ 18,99)</strong> nas próximas <span id="timer">15:00</span>!</p>
         <p class="stock-alert">Convide 3+ amigos e ganhe <strong>10% OFF extra (R$ 17,09)</strong> via Pix!</p>
         <p class="stock-alert" id="stock-alert">Apenas 5 unidades disponíveis!</p>
         <p class="cta-text">🚚 Entrega rápida! Brigadeiro feito sob encomenda após pagamento.</p>
@@ -233,15 +234,15 @@
         </div>
         <div class="grid cols-2">
           <label class="card" style="display:flex;gap:10px;align-items:center">
-            <input type="radio" name="sabor" value="ao-leite" checked aria-label="Sabor Ao Leite" />
+            <input type="radio" name="sabor" value="ao-leite" checked aria-label="Sabor Brigadeiro Ao Leite" />
             <span>Ao Leite</span>
           </label>
           <label class="card" style="display:flex;gap:10px;align-items:center">
-            <input type="radio" name="sabor" value="54-cacau" aria-label="Sabor 54% Cacau" />
+            <input type="radio" name="sabor" value="54-cacau" aria-label="Sabor Brigadeiro 54% Cacau" />
             <span>54% Cacau</span>
           </label>
           <label class="card" style="display:flex;gap:10px;align-items:center">
-            <input type="radio" name="sabor" value="branco" aria-label="Sabor Chocolate Branco" />
+            <input type="radio" name="sabor" value="branco" aria-label="Sabor Brigadeiro Chocolate Branco" />
             <span>Chocolate Branco</span>
           </label>
         </div>
@@ -292,7 +293,7 @@
   <div class="modal" id="data-modal">
     <div class="modal-content data-modal-content">
       <h3>Insira seus Dados! 🚚</h3>
-      <p class="cta-text">Preencha para entrega rápida ou personalizada!</p>
+      <p class="cta-text">Preencha para receber seu brigadeiro gigante com todo carinho!</p>
       <p id="form-status" style="margin: 8px 0; font-weight: 700;"></p>
       <div>
         <label class="address-label">Tipo de Entrega:</label>
@@ -304,31 +305,39 @@
       <div id="date-container">
         <label class="address-label">Data de Entrega:</label>
         <input id="date" type="date" class="date-input" aria-label="Data de entrega" aria-required="true" />
+        <span id="date-error" class="error-message"></span>
       </div>
       <div>
         <label class="address-label">CEP:</label>
         <input id="data-cep" type="text" class="address-input" placeholder="12345-678" maxlength="9" aria-label="CEP" aria-required="true" />
-        <button class="btn" onclick="fetchAddress()" style="padding:8px 16px;margin:6px 0" aria-label="Buscar endereço pelo CEP">Buscar</button>
+        <span id="cep-error" class="error-message"></span>
       </div>
       <div id="data-address-input" style="display:none;">
         <label class="address-label">Rua:</label>
-        <input id="data-street" type="text" class="address-input" aria-label="Rua" aria-required="true" readonly />
+        <input id="data-street" type="text" class="address-input" aria-label="Rua" aria-required="true" placeholder="Digite a rua, se necessário" />
+        <span id="street-error" class="error-message"></span>
         <label class="address-label">Número:</label>
         <input id="data-number" type="text" class="address-input" placeholder="Ex.: 123" aria-label="Número do endereço" aria-required="true" />
+        <span id="number-error" class="error-message"></span>
         <label class="address-label">Bairro:</label>
-        <input id="data-neighborhood" type="text" class="address-input" aria-label="Bairro" aria-required="true" readonly />
+        <input id="data-neighborhood" type="text" class="address-input" aria-label="Bairro" aria-required="true" placeholder="Digite o bairro, se necessário" />
+        <span id="neighborhood-error" class="error-message"></span>
         <label class="address-label">Cidade:</label>
         <input id="data-city" type="text" class="address-input" aria-label="Cidade" aria-required="true" readonly />
+        <span id="city-error" class="error-message"></span>
         <label class="address-label">Estado:</label>
         <input id="data-state" type="text" class="address-input" aria-label="Estado" aria-required="true" readonly />
+        <span id="state-error" class="error-message"></span>
       </div>
       <div>
         <label class="address-label">WhatsApp:</label>
         <input id="data-whatsapp" type="tel" class="whatsapp-input" placeholder="(XX) XXXXX-XXXX" maxlength="15" aria-label="Número do WhatsApp" aria-required="true" />
+        <span id="whatsapp-error" class="error-message"></span>
       </div>
       <div>
         <label class="address-label">Nome Completo:</label>
         <input id="data-name" type="text" class="name-input" placeholder="Ex.: Maria Silva" aria-label="Nome completo" aria-required="true" />
+        <span id="name-error" class="error-message"></span>
       </div>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
         <button class="btn" id="confirm-data-btn" onclick="confirmData()" disabled style="opacity:0.6;cursor:not-allowed;">Confirmar Dados</button>
@@ -339,20 +348,19 @@
 
   <div class="modal" id="confirmation-modal">
     <div class="modal-content">
-      <h3>Confirme seu Pedido! 🍫</h3>
-      <p class="cta-text">Seu brigadeiro será feito sob encomenda após o pagamento!</p>
+      <h3>Seu Brigadeiro Está Quase Pronto! 🍫</h3>
+      <p class="cta-text">Falta pouco! Finalize o pagamento e prepare-se para um momento delicioso!</p>
       <div id="order-summary"></div>
       <div class="pix-details">
-        <h4>Pagamento via Pix</h4>
+        <h4>Pague com Pix</h4>
         <div class="pix-key">
           <span id="pix-key-text"></span>
           <button class="btn" onclick="copyPixKey()">Copiar Chave</button>
         </div>
         <div class="pix-qr">
-          <!-- QR Code será atualizado dinamicamente via script.js -->
           <img id="pix-qr-code" src="" alt="QR Code para pagamento Pix" />
         </div>
-        <p class="mini muted">Envie o comprovante para chocolatria@exemplo.com. Entraremos em contato via WhatsApp para confirmar!</p>
+        <p class="mini muted">Entraremos em contato pelo WhatsApp para confirmar tudo direitinho! 😊</p>
       </div>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
         <button class="btn" onclick="closeModal('confirmation-modal')">Fechar</button>
@@ -362,8 +370,8 @@
 
   <div class="modal" id="share-modal">
     <div class="modal-content share-modal-content">
-      <h3>Compartilhe e Ganhe Desconto! 🎁</h3>
-      <p>Convide 3+ amigos para o grupo e todos ganham <strong>10% OFF extra (R$ 17,09)</strong> via Pix!</p>
+      <h3>Convide Amigos e Ganhe Desconto! 🎁</h3>
+      <p>Chame 3+ amigos para o grupo e todos garantem <strong>10% OFF extra (R$ 17,09)</strong> no Pix!</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
         <button class="btn share-btn" onclick="sharePrivateGroup()" aria-label="Compartilhar com amigos via WhatsApp">Compartilhar com Amigos (WhatsApp)</button>
         <button class="btn share-btn" onclick="sharePublicGroup()" aria-label="Compartilhar nas redes sociais">Compartilhar nas Redes (#BrigadeiroGigante)</button>
