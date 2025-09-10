@@ -1,8 +1,9 @@
-// Configurações manuais
+// Configurações do sistema
 const config = {
   pricing: {
     basePrice: 189.90,
-    standardDiscount: 0.1, // 10% de desconto
+    whiteChocolateExtra: 20.00, // Acréscimo para Chocolate Branco
+    standardDiscount: 0.1, // 10% de desconto padrão
     standardDiscountValue: 18.99, // Valor do desconto padrão
     groupDiscountValue: 17.09 // Valor do desconto de grupo
   },
@@ -55,11 +56,32 @@ const state = {
     state: ''
   },
   whatsapp: '',
-  name: ''
+  name: '',
+  date: ''
 };
 
 // Variável para gerenciar o temporizador
 let timerInterval = null;
+
+// Função para atualizar o preço exibido
+function updatePriceDisplay() {
+  const flavorInput = document.querySelector('input[name="sabor"]:checked');
+  if (!flavorInput) return;
+
+  const flavor = flavorInput.value;
+  let price = config.pricing.basePrice;
+  if (flavor === 'branco') {
+    price += config.pricing.whiteChocolateExtra;
+  }
+  price = price * (1 - config.pricing.standardDiscount);
+  if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
+    price = price * (1 - config.share.groupDiscountRate);
+  }
+  const priceElement = document.getElementById('price');
+  if (priceElement) {
+    priceElement.textContent = price.toFixed(2).replace('.', ',');
+  }
+}
 
 // Função para exibir notificações
 function toast(message) {
@@ -100,8 +122,13 @@ function openDataModal() {
     dataModal.classList.add('show');
     const deliveryTypeSelect = document.getElementById('delivery-type');
     const dateContainer = document.getElementById('date-container');
-    if (deliveryTypeSelect && dateContainer) {
+    const dateInput = document.getElementById('date');
+    if (deliveryTypeSelect && dateContainer && dateInput) {
       dateContainer.classList.toggle('show', deliveryTypeSelect.value === 'event');
+      if (deliveryTypeSelect.value === 'quick') {
+        dateInput.value = ''; // Reseta o campo de data ao mudar para Entrega Rápida
+        state.date = '';
+      }
     }
     toast('🍫 Preencha seus dados para receber seu brigadeiro gigante!');
   }
@@ -144,6 +171,7 @@ function applyGroupCode() {
     localStorage.setItem('chocolatriaState', JSON.stringify(state));
     toast(state.group.groupCode ? `🎉 Código ${state.group.groupCode} aplicado! Desconto extra ativado!` : '⚠️ Por favor, insira um código válido.');
     updateGroupProgress();
+    updatePriceDisplay();
   }
 }
 
@@ -156,6 +184,7 @@ function sharePrivateGroup() {
   window.open(url, '_blank');
   toast('📲 Compartilhado no WhatsApp! Chame mais amigos para o desconto!');
   updateGroupProgress();
+  updatePriceDisplay();
 }
 
 function sharePublicGroup() {
@@ -178,6 +207,7 @@ function sharePublicGroup() {
     });
   }
   updateGroupProgress();
+  updatePriceDisplay();
 }
 
 function shareViaEmail() {
@@ -186,6 +216,7 @@ function shareViaEmail() {
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   toast('📧 Email pronto para enviar! Convide seus amigos!');
   updateGroupProgress();
+  updatePriceDisplay();
 }
 
 function copyShareLink() {
@@ -228,7 +259,7 @@ function formatWhatsapp(value) {
 function fetchAddress() {
   const cepInput = document.getElementById('data-cep');
   const cep = cepInput?.value.replace(/\D/g, '');
-  if (cep.length === 8) {
+  if (cep && cep.length === 8) {
     fetch(`https://viacep.com.br/ws/${cep}/json/`)
       .then(response => response.json())
       .then(data => {
@@ -246,14 +277,14 @@ function fetchAddress() {
         const streetInput = document.getElementById('data-street');
         const neighborhoodInput = document.getElementById('data-neighborhood');
         const cityInput = document.getElementById('data-city');
-        const stateInput = document.getElementById('data-state');
+        const stateEl = document.getElementById('data-state');
         const addressInput = document.getElementById('data-address-input');
 
-        if (streetInput && neighborhoodInput && cityInput && stateInput && addressInput) {
+        if (streetInput && neighborhoodInput && cityInput && stateEl && addressInput) {
           streetInput.value = state.address.street;
           neighborhoodInput.value = state.address.neighborhood;
           cityInput.value = state.address.city;
-          stateInput.value = state.address.state;
+          stateEl.value = state.address.state;
           addressInput.style.display = 'block';
 
           if (!state.address.street || !state.address.neighborhood) {
@@ -292,17 +323,28 @@ function enableManualAddressInput() {
 
 // Função para validar formulário
 function validateForm() {
-  const cep = document.getElementById('data-cep')?.value.replace(/\D/g, '');
-  const number = document.getElementById('data-number')?.value;
-  const whatsapp = document.getElementById('data-whatsapp')?.value.replace(/\D/g, '');
-  const name = document.getElementById('data-name')?.value;
-  const deliveryType = document.getElementById('delivery-type')?.value;
-  const date = document.getElementById('date')?.value;
-  const street = document.getElementById('data-street')?.value;
-  const neighborhood = document.getElementById('data-neighborhood')?.value;
-  const city = document.getElementById('data-city')?.value;
-  const stateInput = document.getElementById('data-state')?.value;
+  const cepInput = document.getElementById('data-cep');
+  const numberInput = document.getElementById('data-number');
+  const whatsappInput = document.getElementById('data-whatsapp');
+  const nameInput = document.getElementById('data-name');
+  const deliveryTypeSelect = document.getElementById('delivery-type');
+  const dateInput = document.getElementById('date');
+  const streetInput = document.getElementById('data-street');
+  const neighborhoodInput = document.getElementById('data-neighborhood');
+  const cityInput = document.getElementById('data-city');
+  const stateInput = document.getElementById('data-state');
   const confirmBtn = document.getElementById('confirm-data-btn');
+
+  const cep = cepInput?.value.replace(/\D/g, '') || '';
+  const number = numberInput?.value || '';
+  const whatsapp = whatsappInput?.value.replace(/\D/g, '') || '';
+  const name = nameInput?.value || '';
+  const deliveryType = deliveryTypeSelect?.value || 'quick';
+  const date = dateInput?.value || '';
+  const street = streetInput?.value || '';
+  const neighborhood = neighborhoodInput?.value || '';
+  const city = cityInput?.value || '';
+  const stateEl = stateInput?.value || '';
 
   const cepError = document.getElementById('cep-error');
   const streetError = document.getElementById('street-error');
@@ -321,36 +363,52 @@ function validateForm() {
   const isStreetValid = street && street.trim() !== '';
   const isNeighborhoodValid = neighborhood && neighborhood.trim() !== '';
   const isCityValid = city && city.trim() !== '';
-  const isStateValid = stateInput && stateInput.trim() !== '';
+  const isStateValid = stateEl && stateEl.trim() !== '';
   const isDateValid = deliveryType === 'quick' || (date && new Date(date) >= new Date());
 
-  if (cepError) cepError.style.display = isCepValid ? 'none' : 'block';
-  if (cepError) cepError.textContent = isCepValid ? '' : 'Por favor, insira um CEP válido (8 dígitos).';
-  if (streetError) streetError.style.display = isStreetValid ? 'none' : 'block';
-  if (streetError) streetError.textContent = isStreetValid ? '' : 'Por favor, insira a rua.';
-  if (numberError) numberError.style.display = isNumberValid ? 'none' : 'block';
-  if (numberError) numberError.textContent = isNumberValid ? '' : 'Por favor, insira o número.';
-  if (neighborhoodError) neighborhoodError.style.display = isNeighborhoodValid ? 'none' : 'block';
-  if (neighborhoodError) neighborhoodError.textContent = isNeighborhoodValid ? '' : 'Por favor, insira o bairro.';
-  if (cityError) cityError.style.display = isCityValid ? 'none' : 'block';
-  if (cityError) cityError.textContent = isCityValid ? '' : 'Por favor, insira a cidade.';
-  if (stateError) stateError.style.display = isStateValid ? 'none' : 'block';
-  if (stateError) stateError.textContent = isStateValid ? '' : 'Por favor, insira o estado.';
-  if (whatsappError) whatsappError.style.display = isWhatsappValid ? 'none' : 'block';
-  if (whatsappError) whatsappError.textContent = isWhatsappValid ? '' : 'Por favor, insira um WhatsApp válido.';
-  if (nameError) nameError.style.display = isNameValid ? 'none' : 'block';
-  if (nameError) nameError.textContent = isNameValid ? '' : 'Por favor, insira um nome válido.';
-  if (dateError) dateError.style.display = (deliveryType === 'event' && !isDateValid) ? 'block' : 'none';
-  if (dateError) dateError.textContent = (deliveryType === 'event' && !isDateValid) ? 'Por favor, selecione uma data válida (futura).' : '';
+  if (cepError) {
+    cepError.style.display = isCepValid ? 'none' : 'block';
+    cepError.textContent = isCepValid ? '' : 'Por favor, insira um CEP válido (8 dígitos).';
+  }
+  if (streetError) {
+    streetError.style.display = isStreetValid ? 'none' : 'block';
+    streetError.textContent = isStreetValid ? '' : 'Por favor, insira a rua.';
+  }
+  if (numberError) {
+    numberError.style.display = isNumberValid ? 'none' : 'block';
+    numberError.textContent = isNumberValid ? '' : 'Por favor, insira o número.';
+  }
+  if (neighborhoodError) {
+    neighborhoodError.style.display = isNeighborhoodValid ? 'none' : 'block';
+    neighborhoodError.textContent = isNeighborhoodValid ? '' : 'Por favor, insira o bairro.';
+  }
+  if (cityError) {
+    cityError.style.display = isCityValid ? 'none' : 'block';
+    cityError.textContent = isCityValid ? '' : 'Por favor, insira a cidade.';
+  }
+  if (stateError) {
+    stateError.style.display = isStateValid ? 'none' : 'block';
+    stateError.textContent = isStateValid ? '' : 'Por favor, insira o estado.';
+  }
+  if (whatsappError) {
+    whatsappError.style.display = isWhatsappValid ? 'none' : 'block';
+    whatsappError.textContent = isWhatsappValid ? '' : 'Por favor, insira um WhatsApp válido.';
+  }
+  if (nameError) {
+    nameError.style.display = isNameValid ? 'none' : 'block';
+    nameError.textContent = isNameValid ? '' : 'Por favor, insira um nome válido.';
+  }
+  if (dateError) {
+    dateError.style.display = (deliveryType === 'event' && !isDateValid) ? 'block' : 'none';
+    dateError.textContent = (deliveryType === 'event' && !isDateValid) ? 'Por favor, selecione uma data válida (futura).' : '';
+  }
 
-  if (isCepValid && isNumberValid && isWhatsappValid && isNameValid && isStreetValid && isNeighborhoodValid && isCityValid && isStateValid && (deliveryType === 'quick' || isDateValid)) {
-    if (confirmBtn) {
+  if (confirmBtn) {
+    if (isCepValid && isNumberValid && isWhatsappValid && isNameValid && isStreetValid && isNeighborhoodValid && isCityValid && isStateValid && (deliveryType === 'quick' || isDateValid)) {
       confirmBtn.disabled = false;
       confirmBtn.style.opacity = '1';
       confirmBtn.style.cursor = 'pointer';
-    }
-  } else {
-    if (confirmBtn) {
+    } else {
       confirmBtn.disabled = true;
       confirmBtn.style.opacity = '0.6';
       confirmBtn.style.cursor = 'not-allowed';
@@ -360,18 +418,29 @@ function validateForm() {
 
 // Função para confirmar dados
 function confirmData() {
-  const cep = document.getElementById('data-cep')?.value.replace(/\D/g, '');
-  const number = document.getElementById('data-number')?.value;
-  const whatsapp = document.getElementById('data-whatsapp')?.value.replace(/\D/g, '');
-  const name = document.getElementById('data-name')?.value;
-  const deliveryType = document.getElementById('delivery-type')?.value;
-  const date = document.getElementById('date')?.value;
-  const street = document.getElementById('data-street')?.value;
-  const neighborhood = document.getElementById('data-neighborhood')?.value;
-  const city = document.getElementById('data-city')?.value;
-  const stateInput = document.getElementById('data-state')?.value;
+  const cepInput = document.getElementById('data-cep');
+  const numberInput = document.getElementById('data-number');
+  const whatsappInput = document.getElementById('data-whatsapp');
+  const nameInput = document.getElementById('data-name');
+  const deliveryTypeSelect = document.getElementById('delivery-type');
+  const dateInput = document.getElementById('date');
+  const streetInput = document.getElementById('data-street');
+  const neighborhoodInput = document.getElementById('data-neighborhood');
+  const cityInput = document.getElementById('data-city');
+  const stateInput = document.getElementById('data-state');
 
-  if (cep && number && whatsapp && name && deliveryType && street && neighborhood && city && stateInput && (deliveryType === 'quick' || (date && new Date(date) >= new Date()))) {
+  const cep = cepInput?.value.replace(/\D/g, '') || '';
+  const number = numberInput?.value || '';
+  const whatsapp = whatsappInput?.value.replace(/\D/g, '') || '';
+  const name = nameInput?.value || '';
+  const deliveryType = deliveryTypeSelect?.value || 'quick';
+  const date = dateInput?.value || '';
+  const street = streetInput?.value || '';
+  const neighborhood = neighborhoodInput?.value || '';
+  const city = cityInput?.value || '';
+  const stateEl = stateInput?.value || '';
+
+  if (cep && number && whatsapp && name && deliveryType && street && neighborhood && city && stateEl && (deliveryType === 'quick' || (date && new Date(date) >= new Date()))) {
     state.address.cep = cep;
     state.address.number = number;
     state.whatsapp = whatsapp;
@@ -380,7 +449,7 @@ function confirmData() {
     state.address.street = street;
     state.address.neighborhood = neighborhood;
     state.address.city = city;
-    state.address.state = stateInput;
+    state.address.state = stateEl;
     state.date = date || '';
 
     if (state.stock > 0) {
@@ -397,7 +466,7 @@ function confirmData() {
 // Função para iniciar o temporizador
 function startTimer() {
   if (timerInterval) {
-    clearInterval(timerInterval); // Limpa o temporizador anterior
+    clearInterval(timerInterval);
   }
   let timeLeft = 15 * 60; // 15 minutos em segundos
   const timerEl = document.getElementById('timer');
@@ -419,7 +488,12 @@ function startTimer() {
 
 // Função para finalizar o pedido
 function checkout() {
-  const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
+  const flavorInput = document.querySelector('input[name="sabor"]:checked');
+  if (!flavorInput) {
+    toast('⚠️ Selecione um sabor antes de finalizar o pedido!');
+    return;
+  }
+  const sabor = flavorInput.nextElementSibling.textContent.trim();
   const now = new Date();
   const currentHour = now.getHours();
   let deliveryDate;
@@ -433,7 +507,7 @@ function checkout() {
     } else {
       const nextBusinessDay = new Date(now);
       nextBusinessDay.setDate(now.getDate() + (now.getDay() === 6 ? 2 : 1));
-      nextBusinessDay.setHours(10, 0, 0, 0); // Entrega padrão às 10h do próximo dia útil
+      nextBusinessDay.setHours(10, 0, 0, 0);
       deliveryDate = nextBusinessDay.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
       deliveryNote = `Estamos fora do horário comercial, mas não se preocupe! Entraremos em contato no próximo dia útil (${deliveryDate}) para confirmar a entrega rapidinha!`;
     }
@@ -443,20 +517,23 @@ function checkout() {
   }
 
   let preco = config.pricing.basePrice;
+  if (flavorInput.value === 'branco') {
+    preco += config.pricing.whiteChocolateExtra;
+  }
   const groupCode = state.group.groupCode || '';
 
   let discountText = `Desconto de 10% (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
-  preco = preco * (1 - config.pricing.standardDiscount);
+  preco = Number((preco * (1 - config.pricing.standardDiscount)).toFixed(2));
   let groupDiscountApplied = false;
   if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
-    preco = preco * (1 - config.share.groupDiscountRate);
+    preco = Number((preco * (1 - config.share.groupDiscountRate)).toFixed(2));
     groupDiscountApplied = true;
     discountText = `Desconto de 10% (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
   }
 
   const summary = `
     <strong>Resumo do Seu Pedido:</strong><br>
-    • Sabor: ${sabor}<br>
+    • Sabor: ${sabor}${sabor === 'Chocolate Branco' ? ' (+ R$ 20,00)' : ''}<br>
     • Nome: ${state.name}<br>
     • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep.replace(/(\d{5})(\d{3})/, '$1-$2')}<br>
     • Frete: Grátis (nossa filial está pertinho, a 2,7 km!)<br>
@@ -577,6 +654,13 @@ document.addEventListener('DOMContentLoaded', () => {
     deliveryTypeSelect.addEventListener('change', () => {
       state.deliveryType = deliveryTypeSelect.value;
       dateContainer.classList.toggle('show', state.deliveryType === 'event');
+      if (state.deliveryType === 'quick') {
+        const dateInput = document.getElementById('date');
+        if (dateInput) {
+          dateInput.value = '';
+          state.date = '';
+        }
+      }
       validateForm();
     });
   }
@@ -605,4 +689,14 @@ document.addEventListener('DOMContentLoaded', () => {
       validateForm();
     });
   }
+
+  // Configurar atualização de preço ao mudar sabor
+  const flavorInputs = document.querySelectorAll('input[name="sabor"]');
+  flavorInputs.forEach(input => {
+    input.addEventListener('change', updatePriceDisplay);
+  });
+
+  // Inicializar preço e temporizador
+  updatePriceDisplay();
+  startTimer();
 });
