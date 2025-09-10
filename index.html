@@ -49,6 +49,7 @@
     .stats { display: flex; gap: clamp(15px, 3vw, 22px); flex-wrap: wrap; margin: 24px 0; }
     .stat { padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; font-size: clamp(0.9rem, 2vw, 1rem); }
     .price { font-size: clamp(1.8rem, 3vw, 2rem); font-weight: 900; color: var(--gold); transition: all 0.3s ease; }
+    .flavor-note { font-size: clamp(0.7rem, 1.8vw, 0.8rem); color: var(--gold); margin-left: 8px; }
     .imgWrap { position: relative; aspect-ratio: 1/1; border-radius: 28px; background: linear-gradient(145deg, #1b120d, #100b08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 30px 60px rgba(0,0,0,0.5); overflow: hidden; display: grid; place-items: center; }
     .bigBrigadeiro { position: absolute; inset: 0; display: grid; place-items: center; z-index: 1; }
     .choco { width: clamp(70%, 20vw, 78%); height: clamp(70%, 20vw, 78%); border-radius: 50%; background: radial-gradient(circle at 45% 35%, #3b2318, #150c07 70%); box-shadow: inset 0 -35px 60px rgba(0,0,0,0.6), 0 20px 80px rgba(0,0,0,0.55); position: relative; overflow: hidden; }
@@ -76,6 +77,7 @@
       .imgWrap { margin-top: 20px; }
       .grid.cols-2 { grid-template-columns: 1fr; }
       .grid.cols-3 { grid-template-columns: 1fr; }
+      .modal-content { padding: 8px; }
     }
     .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: clamp(16px, 3vw, 22px); box-shadow: 0 12px 30px rgba(0,0,0,0.35); }
     .badge { display: inline-block; background: rgba(213,178,110,0.18); border: 1px solid rgba(213,178,110,0.35); color: var(--gold); padding: 6px 10px; border-radius: 999px; font-size: clamp(0.7rem, 1.8vw, 0.8rem); font-weight: 700; letter-spacing: 0.04em; }
@@ -152,15 +154,9 @@
     #form-status { margin: 8px 0; font-weight: 700; }
     select.address-input { background: transparent; color: var(--cream); }
     select.address-input option { background: var(--bg-soft); color: var(--cream); }
-    .error-message { color: var(--danger); display: none; font-size: clamp(0.8rem, 2vw, 0.9rem); margin-top: 4px; }
+    .error-message { color: var(--danger); display: none; font-size: clamp(0.8rem, 2vw, 0.9rem); margin-top: 4px; text-align: left; }
     #date-container { display: none; transition: opacity 0.3s ease, max-height 0.3s ease; max-height: 0; opacity: 0; overflow: hidden; }
     #date-container.show { display: block; max-height: 100px; opacity: 1; }
-    @media (max-width: 599px) {
-      .modal-content { padding: 10px; }
-      .modal-content h3 { font-size: clamp(1.1rem, 2.5vw, 1.3rem); }
-      .address-label, .share-input, .address-input, .whatsapp-input, .name-input, .date-input, .error-message { font-size: clamp(0.8rem, 2vw, 0.9rem); }
-      .btn { padding: 10px 16px; font-size: clamp(0.9rem, 2vw, 1rem); }
-    }
   </style>
 </head>
 <body>
@@ -206,7 +202,7 @@
           <video autoplay loop playsinline muted id="hero-video" data-muted="true">
             <source src="Videos/Video01.mp4" type="video/mp4">
           </video>
-          <button class="btn audio-btn" data-video-id="hero-video" aria-controls="hero-video" onclick="toggleAudio('hero-video')" aria-label="Ativar/desativar áudio do vídeo principal" tabindex="0">🔇</button>
+          <button class="btn audio-btn" data-video-id="hero-video" aria-controls="hero-video" onclick="toggleAudio('hero-video')" aria-label="Ativar/desativar áudio do vídeo principal">🔇</button>
         </div>
       </div>
     </div>
@@ -245,7 +241,7 @@
           </label>
           <label class="card" style="display:flex;gap:10px;align-items:center">
             <input type="radio" name="sabor" value="branco" aria-label="Sabor Brigadeiro Chocolate Branco" />
-            <span>Chocolate Branco</span>
+            <span>Chocolate Branco <span class="flavor-note">(+ R$ 20,00)</span></span>
           </label>
         </div>
         <div class="grid cols-2">
@@ -298,47 +294,47 @@
       <p class="cta-text">Preencha para receber seu brigadeiro gigante com todo carinho!</p>
       <p id="form-status" style="margin: 8px 0; font-weight: 700;"></p>
       <div>
-        <label class="address-label">Tipo de Entrega:</label>
+        <label class="address-label" for="delivery-type">Tipo de Entrega:</label>
         <select id="delivery-type" class="address-input" aria-label="Tipo de entrega" aria-required="true">
           <option value="quick">Entrega Rápida (2 horas)</option>
           <option value="event">Festa/Evento</option>
         </select>
       </div>
-      <div id="date-container" style="display: none;">
-        <label class="address-label">Data de Entrega:</label>
-        <input id="date" type="date" class="date-input" aria-label="Data de entrega" aria-required="true" required />
+      <div id="date-container">
+        <label class="address-label" for="date">Data de Entrega:</label>
+        <input id="date" type="date" class="date-input" aria-label="Data de entrega" aria-describedby="date-error" placeholder="Selecione uma data futura" required />
         <span id="date-error" class="error-message"></span>
       </div>
       <div>
-        <label class="address-label">CEP:</label>
-        <input id="data-cep" type="text" class="address-input" placeholder="12345-678" maxlength="9" aria-label="CEP" aria-required="true" />
+        <label class="address-label" for="data-cep">CEP:</label>
+        <input id="data-cep" type="text" class="address-input" placeholder="12345-678" maxlength="9" aria-label="CEP" aria-describedby="cep-error" aria-required="true" />
         <span id="cep-error" class="error-message"></span>
       </div>
       <div id="data-address-input" style="display:none;">
-        <label class="address-label">Rua:</label>
-        <input id="data-street" type="text" class="address-input" aria-label="Rua" aria-required="true" placeholder="Digite a rua, se necessário" />
+        <label class="address-label" for="data-street">Rua:</label>
+        <input id="data-street" type="text" class="address-input" aria-label="Rua" aria-describedby="street-error" placeholder="Digite a rua, se necessário" aria-required="true" />
         <span id="street-error" class="error-message"></span>
-        <label class="address-label">Número:</label>
-        <input id="data-number" type="text" class="address-input" placeholder="Ex.: 123" aria-label="Número do endereço" aria-required="true" />
+        <label class="address-label" for="data-number">Número:</label>
+        <input id="data-number" type="text" class="address-input" placeholder="Ex.: 123" aria-label="Número do endereço" aria-describedby="number-error" aria-required="true" />
         <span id="number-error" class="error-message"></span>
-        <label class="address-label">Bairro:</label>
-        <input id="data-neighborhood" type="text" class="address-input" aria-label="Bairro" aria-required="true" placeholder="Digite o bairro, se necessário" />
+        <label class="address-label" for="data-neighborhood">Bairro:</label>
+        <input id="data-neighborhood" type="text" class="address-input" aria-label="Bairro" aria-describedby="neighborhood-error" placeholder="Digite o bairro, se necessário" aria-required="true" />
         <span id="neighborhood-error" class="error-message"></span>
-        <label class="address-label">Cidade:</label>
-        <input id="data-city" type="text" class="address-input" aria-label="Cidade" aria-required="true" readonly />
+        <label class="address-label" for="data-city">Cidade:</label>
+        <input id="data-city" type="text" class="address-input" aria-label="Cidade" aria-describedby="city-error" aria-required="true" readonly />
         <span id="city-error" class="error-message"></span>
-        <label class="address-label">Estado:</label>
-        <input id="data-state" type="text" class="address-input" aria-label="Estado" aria-required="true" readonly />
+        <label class="address-label" for="data-state">Estado:</label>
+        <input id="data-state" type="text" class="address-input" aria-label="Estado" aria-describedby="state-error" aria-required="true" readonly />
         <span id="state-error" class="error-message"></span>
       </div>
       <div>
-        <label class="address-label">WhatsApp:</label>
-        <input id="data-whatsapp" type="tel" class="whatsapp-input" placeholder="(XX) XXXXX-XXXX" maxlength="15" aria-label="Número do WhatsApp" aria-required="true" />
+        <label class="address-label" for="data-whatsapp">WhatsApp:</label>
+        <input id="data-whatsapp" type="tel" class="whatsapp-input" placeholder="(XX) XXXXX-XXXX" maxlength="15" aria-label="Número do WhatsApp" aria-describedby="whatsapp-error" aria-required="true" />
         <span id="whatsapp-error" class="error-message"></span>
       </div>
       <div>
-        <label class="address-label">Nome Completo:</label>
-        <input id="data-name" type="text" class="name-input" placeholder="Ex.: Maria Silva" aria-label="Nome completo" aria-required="true" />
+        <label class="address-label" for="data-name">Nome Completo:</label>
+        <input id="data-name" type="text" class="name-input" placeholder="Ex.: Maria Silva" aria-label="Nome completo" aria-describedby="name-error" aria-required="true" />
         <span id="name-error" class="error-message"></span>
       </div>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
