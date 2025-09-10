@@ -150,6 +150,8 @@
     .cta-text { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--success); font-weight: 700; margin: 10px 0; }
     #date:invalid, .whatsapp-input:invalid, .address-input:invalid, .name-input:invalid, .date-input:invalid { border: 2px solid var(--danger); }
     #form-status { margin: 8px 0; font-weight: 700; }
+    select.address-input { background: transparent; color: var(--cream); }
+    select.address-input option { background: var(--bg-soft); color: var(--cream); }
     @media (max-width: 599px) {
       .modal-content { padding: 10px; }
       .modal-content h3 { font-size: clamp(1.1rem, 2.5vw, 1.3rem); }
@@ -207,11 +209,12 @@
     </div>
   </section>
 
-  <section class="section" id="comprar">
+  <section class="section" id="sabores">
     <div class="container">
       <div class="card" style="text-align:center;margin-bottom:16px">
         <p class="stock-alert">🔥 Oferta especial: <strong>10% OFF (R$ 18,99)</strong> nas próximas <span id="timer">10:00</span>!</p>
         <p class="stock-alert">Convide 3+ amigos e ganhe <strong>10% OFF extra (R$ 17,09)</strong> via Pix!</p>
+        <p class="stock-alert" id="stock-alert">Apenas 5 unidades disponíveis!</p>
         <p class="cta-text">🚚 Entrega rápida! Brigadeiro feito sob encomenda após pagamento.</p>
       </div>
       <div class="card" style="display:grid;gap:16px">
@@ -220,7 +223,6 @@
           <div style="flex:1">
             <strong>Brigadeiro Gigante</strong>
             <div class="mini muted">1,2 kg • Serve 10–12 pessoas • Embalagem presente</div>
-            <div class="stock-alert" id="stock-alert">Apenas 5 unidades disponíveis!</div>
             <div class="badge">100% Artesanal</div>
             <div class="badge">Pagamento Seguro</div>
           </div>
@@ -231,21 +233,22 @@
         </div>
         <div class="grid cols-2">
           <label class="card" style="display:flex;gap:10px;align-items:center">
-            <input type="radio" name="sabor" value="Classico" checked aria-label="Sabor Ao Leite" />
+            <input type="radio" name="sabor" value="ao-leite" checked aria-label="Sabor Ao Leite" />
             <span>Ao Leite</span>
           </label>
           <label class="card" style="display:flex;gap:10px;align-items:center">
-            <input type="radio" name="sabor" value="54" aria-label="Sabor 54% Cacau" />
+            <input type="radio" name="sabor" value="54-cacau" aria-label="Sabor 54% Cacau" />
             <span>54% Cacau</span>
+          </label>
+          <label class="card" style="display:flex;gap:10px;align-items:center">
+            <input type="radio" name="sabor" value="branco" aria-label="Sabor Chocolate Branco" />
+            <span>Chocolate Branco</span>
           </label>
         </div>
         <div class="grid cols-2">
-          <div class="card mini" style="grid-column: span 2;">
-            <p class="cta-text">Clique em "Finalizar Pedido!" para inserir a data e endereço de entrega! 📅🚚</p>
-          </div>
           <div id="group-input" class="card mini" style="grid-column:span 2;">
             <strong>Código do Grupo (opcional):</strong>
-            <input id="group-code" type="text" placeholder="ex.: ABC123" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--cream);padding:8px 10px;border-radius:8px;margin-left:8px;width:clamp(150px, 40vw, 200px)" aria-label="Código do grupo" />
+            <input id="group-code" type="text" placeholder="ex.: ABC123" class="share-input" aria-label="Código do grupo" />
             <button class="btn" onclick="applyGroupCode()" style="padding:8px 16px;margin-left:8px" aria-label="Aplicar código do grupo">Aplicar</button>
           </div>
         </div>
@@ -289,9 +292,16 @@
   <div class="modal" id="data-modal">
     <div class="modal-content data-modal-content">
       <h3>Insira seus Dados! 🚚</h3>
-      <p class="cta-text">Preencha para entrega rápida e personalizada!</p>
+      <p class="cta-text">Preencha para entrega rápida ou personalizada!</p>
       <p id="form-status" style="margin: 8px 0; font-weight: 700;"></p>
       <div>
+        <label class="address-label">Tipo de Entrega:</label>
+        <select id="delivery-type" class="address-input" aria-label="Tipo de entrega" aria-required="true">
+          <option value="quick">Entrega Rápida (2 horas)</option>
+          <option value="event">Festa/Evento (selecionar data)</option>
+        </select>
+      </div>
+      <div id="date-container">
         <label class="address-label">Data de Entrega:</label>
         <input id="date" type="date" class="date-input" aria-label="Data de entrega" aria-required="true" />
       </div>
@@ -339,7 +349,8 @@
           <button class="btn" onclick="copyPixKey()">Copiar Chave</button>
         </div>
         <div class="pix-qr">
-          <img src="https://placehold.co/200x200?text=QR+Code+Pix" alt="QR Code para pagamento Pix" />
+          <!-- QR Code será atualizado dinamicamente via script.js -->
+          <img id="pix-qr-code" src="" alt="QR Code para pagamento Pix" />
         </div>
         <p class="mini muted">Envie o comprovante para chocolatria@exemplo.com. Entraremos em contato via WhatsApp para confirmar!</p>
       </div>
