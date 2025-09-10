@@ -58,7 +58,7 @@ const state = {
   name: ''
 };
 
-// Variável para gerenciar o temporizador (Melhoria 2.1)
+// Variável para gerenciar o temporizador
 let timerInterval = null;
 
 // Função para exibir notificações
@@ -98,6 +98,11 @@ function openDataModal() {
   const dataModal = document.getElementById('data-modal');
   if (dataModal) {
     dataModal.classList.add('show');
+    const deliveryTypeSelect = document.getElementById('delivery-type');
+    const dateContainer = document.getElementById('date-container');
+    if (deliveryTypeSelect && dateContainer) {
+      dateContainer.classList.toggle('show', deliveryTypeSelect.value === 'event');
+    }
     toast('🍫 Preencha seus dados para receber seu brigadeiro gigante!');
   }
 }
@@ -136,7 +141,7 @@ function applyGroupCode() {
   if (groupCodeInput) {
     state.group.groupCode = groupCodeInput.value.trim();
     state.group.groupSize = state.group.groupCode ? 3 : 0; // Simulação de tamanho do grupo
-    localStorage.setItem('chocolatriaState', JSON.stringify(state)); // Melhoria 2.2
+    localStorage.setItem('chocolatriaState', JSON.stringify(state));
     toast(state.group.groupCode ? `🎉 Código ${state.group.groupCode} aplicado! Desconto extra ativado!` : '⚠️ Por favor, insira um código válido.');
     updateGroupProgress();
   }
@@ -145,7 +150,7 @@ function applyGroupCode() {
 // Funções de compartilhamento
 function sharePrivateGroup() {
   state.group.privateShared = true;
-  localStorage.setItem('chocolatriaState', JSON.stringify(state)); // Melhoria 2.2
+  localStorage.setItem('chocolatriaState', JSON.stringify(state));
   const text = `Ei, já viu o Brigadeiro Gigante da Chocolatria? 🍫 É edição limitada e perfeito para festas! Junte-se ao meu grupo e vamos garantir 10% OFF extra! Use o código ${state.group.groupCode || 'ABC123'}: ${config.share.shareLink} ${config.hashtag}`;
   const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
   window.open(url, '_blank');
@@ -155,7 +160,7 @@ function sharePrivateGroup() {
 
 function sharePublicGroup() {
   state.group.publicShared = true;
-  localStorage.setItem('chocolatriaState', JSON.stringify(state)); // Melhoria 2.2
+  localStorage.setItem('chocolatriaState', JSON.stringify(state));
   const text = `Descobri o Brigadeiro Gigante da Chocolatria! 🍫 Edição limitada, perfeito para surpreender! Junte-se ao grupo com o código ${state.group.groupCode || 'ABC123'} e ganhe 10% OFF extra! ${config.share.shareLink} ${config.hashtag}`;
   if (navigator.share) {
     navigator.share({
@@ -198,7 +203,7 @@ function updateGroupProgress() {
   }
 }
 
-// Função para formatar CEP (Melhoria 1.2)
+// Função para formatar CEP
 function formatCep(value) {
   value = value.replace(/\D/g, '');
   if (value.length > 5) {
@@ -207,7 +212,7 @@ function formatCep(value) {
   return value;
 }
 
-// Função para formatar WhatsApp (Melhoria 1.2)
+// Função para formatar WhatsApp
 function formatWhatsapp(value) {
   value = value.replace(/\D/g, '');
   if (value.length > 2) {
@@ -285,7 +290,7 @@ function enableManualAddressInput() {
   }
 }
 
-// Função para validar formulário (Melhoria 1.1)
+// Função para validar formulário
 function validateForm() {
   const cep = document.getElementById('data-cep')?.value.replace(/\D/g, '');
   const number = document.getElementById('data-number')?.value;
@@ -313,11 +318,11 @@ function validateForm() {
   const isNumberValid = number && number.trim() !== '';
   const isWhatsappValid = whatsapp && whatsapp.length >= 10 && whatsapp.length <= 11;
   const isNameValid = name && name.trim().length >= 2;
-  const isDateValid = deliveryType === 'quick' || (date && new Date(date) >= new Date());
   const isStreetValid = street && street.trim() !== '';
   const isNeighborhoodValid = neighborhood && neighborhood.trim() !== '';
   const isCityValid = city && city.trim() !== '';
   const isStateValid = stateInput && stateInput.trim() !== '';
+  const isDateValid = deliveryType === 'quick' || (date && new Date(date) >= new Date());
 
   if (cepError) cepError.style.display = isCepValid ? 'none' : 'block';
   if (cepError) cepError.textContent = isCepValid ? '' : 'Por favor, insira um CEP válido (8 dígitos).';
@@ -335,10 +340,10 @@ function validateForm() {
   if (whatsappError) whatsappError.textContent = isWhatsappValid ? '' : 'Por favor, insira um WhatsApp válido.';
   if (nameError) nameError.style.display = isNameValid ? 'none' : 'block';
   if (nameError) nameError.textContent = isNameValid ? '' : 'Por favor, insira um nome válido.';
-  if (dateError) dateError.style.display = isDateValid ? 'none' : 'block';
-  if (dateError) dateError.textContent = isDateValid ? '' : 'Por favor, selecione uma data válida.';
+  if (dateError) dateError.style.display = (deliveryType === 'event' && !isDateValid) ? 'block' : 'none';
+  if (dateError) dateError.textContent = (deliveryType === 'event' && !isDateValid) ? 'Por favor, selecione uma data válida (futura).' : '';
 
-  if (isCepValid && isNumberValid && isWhatsappValid && isNameValid && isDateValid && isStreetValid && isNeighborhoodValid && isCityValid && isStateValid) {
+  if (isCepValid && isNumberValid && isWhatsappValid && isNameValid && isStreetValid && isNeighborhoodValid && isCityValid && isStateValid && (deliveryType === 'quick' || isDateValid)) {
     if (confirmBtn) {
       confirmBtn.disabled = false;
       confirmBtn.style.opacity = '1';
@@ -360,12 +365,13 @@ function confirmData() {
   const whatsapp = document.getElementById('data-whatsapp')?.value.replace(/\D/g, '');
   const name = document.getElementById('data-name')?.value;
   const deliveryType = document.getElementById('delivery-type')?.value;
+  const date = document.getElementById('date')?.value;
   const street = document.getElementById('data-street')?.value;
   const neighborhood = document.getElementById('data-neighborhood')?.value;
   const city = document.getElementById('data-city')?.value;
   const stateInput = document.getElementById('data-state')?.value;
 
-  if (cep && number && whatsapp && name && deliveryType && street && neighborhood && city && stateInput) {
+  if (cep && number && whatsapp && name && deliveryType && street && neighborhood && city && stateInput && (deliveryType === 'quick' || (date && new Date(date) >= new Date()))) {
     state.address.cep = cep;
     state.address.number = number;
     state.whatsapp = whatsapp;
@@ -375,10 +381,11 @@ function confirmData() {
     state.address.neighborhood = neighborhood;
     state.address.city = city;
     state.address.state = stateInput;
+    state.date = date || '';
 
     if (state.stock > 0) {
       state.stock--;
-      localStorage.setItem('chocolatriaState', JSON.stringify(state)); // Melhoria 2.2
+      localStorage.setItem('chocolatriaState', JSON.stringify(state));
       document.getElementById('stock-alert').textContent = `Apenas ${state.stock} unidades disponíveis!`;
       checkout();
     } else {
@@ -387,7 +394,7 @@ function confirmData() {
   }
 }
 
-// Função para iniciar o temporizador (Melhoria 2.1)
+// Função para iniciar o temporizador
 function startTimer() {
   if (timerInterval) {
     clearInterval(timerInterval); // Limpa o temporizador anterior
@@ -431,8 +438,7 @@ function checkout() {
       deliveryNote = `Estamos fora do horário comercial, mas não se preocupe! Entraremos em contato no próximo dia útil (${deliveryDate}) para confirmar a entrega rapidinha!`;
     }
   } else {
-    const data = document.getElementById('date')?.value;
-    deliveryDate = new Date(data).toLocaleDateString('pt-BR');
+    deliveryDate = new Date(state.date).toLocaleDateString('pt-BR');
     deliveryNote = `Seu brigadeiro está agendado para ${deliveryDate}! Prepararemos com todo carinho!`;
   }
 
@@ -470,18 +476,19 @@ function checkout() {
   const dataModal = document.getElementById('data-modal');
   if (orderSummary && pixKeyText && pixQrCode && confirmationModal && dataModal) {
     orderSummary.innerHTML = summary;
-    pixKeyText.innerHTML = config.pix.pixKey; // Usar innerHTML para garantir acessibilidade
+    pixKeyText.innerHTML = config.pix.pixKey;
     pixQrCode.src = config.pix.pixQrCodeUrl;
     dataModal.classList.remove('show');
     confirmationModal.classList.add('show');
-    pixKeyText.focus(); // Melhoria 3.1: Foco automático
-    startTimer(); // Melhoria 2.1: Inicia/reinicia o temporizador
-    toast('🎉 Pedido confirmado, ${state.name}! Faça o pagamento via Pix para garantir sua delícia! 😋');
+    pixKeyText.focus();
+    startTimer();
+
+    toast(`🎉 Pedido confirmado, ${state.name}! Faça o pagamento via Pix para garantir sua delícia! 😋`);
 
     const orderData = {
       name: state.name,
       date: deliveryDate,
-      deliveryType: state.deliveryType === 'quick' ? 'Entrega Rápida (2 horas)' : 'Festa/Evento',
+      deliveryType: state.deliveryType === 'quick' ? 'Entrega Rápida (2 horas)' : 'Fasta/Evento',
       deliveryNote: deliveryNote,
       cep: state.address.cep.replace(/(\d{5})(\d{3})/, '$1-$2'),
       street: state.address.street,
@@ -504,6 +511,7 @@ function checkout() {
     state.address.number = '';
     state.whatsapp = '';
     state.name = '';
+    state.date = '';
   }
 }
 
@@ -529,7 +537,7 @@ function saveOrderToServer(orderData) {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
-  // Carregar estado do localStorage (Melhoria 2.2)
+  // Carregar estado do localStorage
   const savedState = localStorage.getItem('chocolatriaState');
   if (savedState) {
     Object.assign(state, JSON.parse(savedState));
@@ -568,12 +576,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (deliveryTypeSelect && dateContainer) {
     deliveryTypeSelect.addEventListener('change', () => {
       state.deliveryType = deliveryTypeSelect.value;
-      dateContainer.style.display = state.deliveryType === 'event' ? 'block' : 'none';
+      dateContainer.classList.toggle('show', state.deliveryType === 'event');
       validateForm();
     });
   }
 
-  // Configurar validação de formulário e máscaras (Melhoria 1.2)
+  // Configurar validação de formulário e máscaras
   const cepInput = document.getElementById('data-cep');
   const whatsappInput = document.getElementById('data-whatsapp');
   const inputs = document.querySelectorAll('#data-cep, #data-number, #data-whatsapp, #data-name, #date, #data-street, #data-neighborhood, #data-city, #data-state');
