@@ -1,8 +1,8 @@
-// Configurações
+// Configurações manuais
 const config = {
   pix: {
-    pixKey: "sua-chave-pix-aqui@example.com",
-    pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix"
+    pixKey: "sua-chave-pix-aqui@example.com", // Substitua pela chave Pix real
+    pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix" // Substitua pela URL do QR Code real
   },
   videos: [
     'Videos/Video01.mp4',
@@ -27,7 +27,12 @@ const config = {
     groupDiscountValue: 17.09 // R$ 17,09 (10% sobre R$ 170,91)
   },
   delivery: {
-    cutoffHour: 16 // 16h para entrega no mesmo dia
+    businessHoursStart: 8, // 8h
+    businessHoursEnd: 18, // 18h
+    quickDeliveryHours: 2 // Entrega rápida em 2 horas
+  },
+  stock: {
+    initialStock: 5 // Estoque inicial
   }
 };
 
@@ -48,11 +53,12 @@ const state = {
     state: ''
   },
   whatsapp: '',
-  name: ''
+  name: '',
+  deliveryType: 'quick' // Tipo de entrega padrão
 };
 
 // Controle de estoque
-let stockCount = 5;
+let stockCount = config.stock.initialStock;
 
 // Função para exibir toast
 function toast(message) {
@@ -263,7 +269,7 @@ function setupVideoObserver() {
         video.setAttribute('data-muted', 'true');
         if (button) {
           button.textContent = '🔇';
-          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
+          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
         }
       }
     });
@@ -372,6 +378,7 @@ async function fetchAddress() {
 
 // Atualizar status do formulário
 function updateFormStatus() {
+  const deliveryType = document.getElementById('delivery-type');
   const dateInput = document.getElementById('date');
   const cepInput = document.getElementById('data-cep');
   const streetInput = document.getElementById('data-street');
@@ -384,27 +391,32 @@ function updateFormStatus() {
   const statusEl = document.getElementById('form-status');
   const confirmBtn = document.getElementById('confirm-data-btn');
 
-  if (!dateInput || !cepInput || !streetInput || !numberInput || !neighborhoodInput || !cityInput || !stateInput || !whatsappInput || !nameInput || !statusEl || !confirmBtn) {
+  if (!deliveryType || !dateInput || !cepInput || !streetInput || !numberInput || !neighborhoodInput || !cityInput || !stateInput || !whatsappInput || !nameInput || !statusEl || !confirmBtn) {
     console.error('Um ou mais elementos do formulário não encontrados');
     toast('Erro interno: formulário incompleto 😕');
     return;
   }
 
-  const selectedDateStr = dateInput.value;
-  let isDateValid = false;
-  if (selectedDateStr) {
-    const selectedDate = new Date(selectedDateStr);
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const currentHour = now.getHours();
-    selectedDate.setHours(0, 0, 0, 0);
-    isDateValid = !isNaN(selectedDate.getTime()) && selectedDate >= today;
-    if (selectedDate.getTime() === today.getTime() && currentHour >= config.delivery.cutoffHour) {
+  let isDateValid = true;
+  if (deliveryType.value === 'event') {
+    const selectedDateStr = dateInput.value;
+    if (selectedDateStr) {
+      const selectedDate = new Date(selectedDateStr);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const currentHour = now.getHours();
+      selectedDate.setHours(0, 0, 0, 0);
+      isDateValid = !isNaN(selectedDate.getTime()) && selectedDate > today;
+      if (selectedDate.getTime() === today.getTime()) {
+        isDateValid = false;
+      }
+      console.log(`Validação de data (Festa/Evento): ${selectedDateStr} -> ${isDateValid ? 'Válida' : 'Inválida'}`);
+    } else {
       isDateValid = false;
+      console.log('Data não preenchida para Festa/Evento');
     }
-    console.log(`Validação de data: ${selectedDateStr} -> ${isDateValid ? 'Válida' : 'Inválida'}`);
   } else {
-    console.log('Data não preenchida');
+    console.log('Entrega Rápida selecionada, validando horário comercial');
   }
 
   const cep = cepInput.value.replace(/\D/g, '');
@@ -423,13 +435,13 @@ function updateFormStatus() {
   console.log(`Validação de nome: ${name} -> ${isNameValid ? 'Válido' : 'Inválido'}`);
 
   let statusMessage = '';
-  if (!isDateValid) statusMessage += 'Data de entrega inválida ou não preenchida. ';
+  if (deliveryType.value === 'event' && !isDateValid) statusMessage += 'Data de entrega inválida ou não preenchida. ';
   if (!isCepValid) statusMessage += 'CEP inválido. ';
   if (!isAddressValid) statusMessage += 'Endereço incompleto (número, cidade ou estado faltando). ';
   if (!isWhatsAppValid) statusMessage += 'WhatsApp inválido. ';
   if (!isNameValid) statusMessage += 'Nome inválido (mínimo 3 letras). ';
 
-  const allValid = isDateValid && isCepValid && isAddressValid && isWhatsAppValid && isNameValid;
+  const allValid = (deliveryType.value === 'quick' || isDateValid) && isCepValid && isAddressValid && isWhatsAppValid && isNameValid;
   if (allValid) {
     statusEl.textContent = 'Todos os campos foram preenchidos corretamente! ✅';
     statusEl.style.color = 'var(--success)';
@@ -472,6 +484,9 @@ function openDataModal() {
     document.getElementById('data-whatsapp').value = state.whatsapp || '';
     document.getElementById('data-name').value = state.name || '';
     document.getElementById('data-address-input').style.display = state.address.cep ? 'block' : 'none';
+    const deliveryType = document.getElementById('delivery-type');
+    deliveryType.value = state.deliveryType;
+
     updateDateInput();
 
     const whatsappInput = document.getElementById('data-whatsapp');
@@ -479,7 +494,9 @@ function openDataModal() {
     const dateInput = document.getElementById('date');
     const numberInput = document.getElementById('data-number');
     const nameInput = document.getElementById('data-name');
+    const newDeliveryType = deliveryType.cloneNode(true);
 
+    deliveryType.parentNode.replaceChild(newDeliveryType, deliveryType);
     const newWhatsappInput = whatsappInput.cloneNode(true);
     const newCepInput = cepInput.cloneNode(true);
     const newDateInput = dateInput.cloneNode(true);
@@ -491,6 +508,11 @@ function openDataModal() {
     numberInput.parentNode.replaceChild(newNumberInput, numberInput);
     nameInput.parentNode.replaceChild(newNameInput, nameInput);
 
+    newDeliveryType.addEventListener('change', () => {
+      state.deliveryType = newDeliveryType.value;
+      updateDateInput();
+      updateFormStatus();
+    });
     newWhatsappInput.addEventListener('input', () => {
       formatWhatsApp(newWhatsappInput);
       state.whatsapp = newWhatsappInput.value.replace(/\D/g, '');
@@ -520,7 +542,7 @@ function confirmData() {
     toast('Preencha todos os campos corretamente antes de confirmar! 🚫');
     return;
   }
-  if (!validateDate()) return;
+  if (state.deliveryType === 'event' && !validateDate()) return;
   const numberInput = document.getElementById('data-number');
   const whatsappInput = document.getElementById('data-whatsapp');
   const nameInput = document.getElementById('data-name');
@@ -572,7 +594,29 @@ function updateStock() {
 // Checkout
 function checkout() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
-  const data = document.getElementById('date')?.value;
+  const now = new Date();
+  const currentHour = now.getHours();
+  let deliveryDate;
+  let deliveryNote = '';
+
+  if (state.deliveryType === 'quick') {
+    if (currentHour >= config.delivery.businessHoursStart && currentHour < config.delivery.businessHoursEnd) {
+      const deliveryTime = new Date(now.getTime() + config.delivery.quickDeliveryHours * 60 * 60 * 1000);
+      deliveryDate = deliveryTime.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+      deliveryNote = `Entrega estimada em até 2 horas (${deliveryDate}) após confirmação do pagamento.`;
+    } else {
+      const nextBusinessDay = new Date(now);
+      nextBusinessDay.setDate(now.getDate() + (now.getDay() === 6 ? 2 : 1));
+      nextBusinessDay.setHours(10, 0, 0, 0); // Entrega padrão às 10h do próximo dia útil
+      deliveryDate = nextBusinessDay.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+      deliveryNote = `Fora do horário comercial. Entraremos em contato no próximo dia útil para confirmar o horário de entrega. Data estimada: ${deliveryDate}.`;
+    }
+  } else {
+    const data = document.getElementById('date')?.value;
+    deliveryDate = new Date(data).toLocaleDateString('pt-BR');
+    deliveryNote = `Entrega agendada para ${deliveryDate}.`;
+  }
+
   let preco = config.pricing.basePrice;
   const groupCode = state.group.groupCode || '';
 
@@ -591,7 +635,8 @@ function checkout() {
     • Nome: ${state.name}<br>
     • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}<br>
     • Frete: Grátis (filial a 2,7 km)<br>
-    • Data de Entrega: ${new Date(data).toLocaleDateString('pt-BR')}<br>
+    • Tipo de Entrega: ${state.deliveryType === 'quick' ? 'Entrega Rápida (2 horas)' : 'Festa/Evento'}<br>
+    • ${deliveryNote}<br>
     • WhatsApp: ${state.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}<br>
     • Preço: R$ ${preco.toFixed(2).replace('.', ',')}<br>
     ${groupCode ? '• Código do Grupo: ' + groupCode + '<br>' : ''}
@@ -612,7 +657,9 @@ function checkout() {
 
     const orderData = {
       name: state.name,
-      date: new Date(data).toLocaleDateString('pt-BR'),
+      date: deliveryDate,
+      deliveryType: state.deliveryType === 'quick' ? 'Entrega Rápida (2 horas)' : 'Festa/Evento',
+      deliveryNote: deliveryNote,
       cep: state.address.cep.replace(/(\d{5})(\d{3})/, '$1-$2'),
       street: state.address.street,
       number: state.address.number,
@@ -772,6 +819,9 @@ function checkUrlForGroupCode() {
 
 // Validação de Data
 function validateDate() {
+  if (state.deliveryType === 'quick') {
+    return true; // Entrega rápida não exige validação de data
+  }
   const dateInput = document.getElementById('date');
   if (!dateInput) {
     console.error('Campo de data (#date) não encontrado');
@@ -801,15 +851,8 @@ function validateDate() {
   
   console.log(`Validando data: ${selectedDateStr} (Selecionada: ${selectedDate.toLocaleDateString('pt-BR')}, Hoje: ${today.toLocaleDateString('pt-BR')}, Horário: ${now.toLocaleTimeString('pt-BR')})`);
   
-  if (selectedDate < today) {
-    toast(`Data inválida! Escolha a partir de ${today.toLocaleDateString('pt-BR')} 📅`);
-    dateInput.value = '';
-    dateInput.focus();
-    return false;
-  }
-  
-  if (selectedDate.getTime() === today.getTime() && currentHour >= config.delivery.cutoffHour) {
-    toast('Entregas no mesmo dia após 16h não são permitidas. Escolha outra data. 🚚');
+  if (selectedDate <= today) {
+    toast(`Data inválida! Escolha uma data futura para festas ou eventos. 📅`);
     dateInput.value = '';
     dateInput.focus();
     return false;
@@ -820,41 +863,49 @@ function validateDate() {
 
 // Configurar data mínima
 function updateDateInput() {
+  const deliveryType = document.getElementById('delivery-type');
   const dateInput = document.getElementById('date');
-  if (!dateInput) {
-    console.error('Campo de data (#date) não encontrado');
-    toast('Erro interno: campo de data não encontrado. 😕');
+  const dateContainer = document.getElementById('date-container');
+  if (!deliveryType || !dateInput || !dateContainer) {
+    console.error('Elementos de entrega ou data não encontrados');
+    toast('Erro interno: elementos de entrega não encontrados. 😕');
     return;
   }
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentHour = now.getHours();
-  let minDate = today;
   
-  if (currentHour >= config.delivery.cutoffHour) {
-    minDate = new Date(today);
-    minDate.setDate(today.getDate() + 1);
-  }
-  
-  const minDateStr = minDate.toISOString().split('T')[0];
-  dateInput.min = minDateStr;
-  console.log(`Data mínima definida: ${minDateStr} (Horário atual: ${now.toLocaleString('pt-BR')})`);
-  
-  if (dateInput.value) {
-    const selectedDate = new Date(dateInput.value);
-    if (isNaN(selectedDate.getTime())) {
-      console.warn('Data inválida no campo:', dateInput.value);
-      toast('Formato de data inválido! Selecione uma data válida. 📅');
-      dateInput.value = '';
-      dateInput.focus();
-      return;
+  if (deliveryType.value === 'quick') {
+    dateContainer.style.display = 'none';
+    dateInput.value = '';
+    console.log('Entrega rápida selecionada, campo de data oculto');
+  } else {
+    dateContainer.style.display = 'block';
+    let minDate = new Date(today);
+    minDate.setDate(today.getDate() + 1); // Data mínima é o próximo dia
+    if (currentHour >= config.delivery.businessHoursEnd || currentHour < config.delivery.businessHoursStart) {
+      minDate.setDate(today.getDate() + (now.getDay() === 6 ? 2 : 1)); // Próximo dia útil
     }
-    selectedDate.setHours(0, 0, 0, 0);
-    if (selectedDate < minDate) {
-      console.warn(`Data selecionada (${dateInput.value}) é anterior à mínima (${minDateStr})`);
-      toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')} 📅`);
-      dateInput.value = '';
-      dateInput.focus();
+    const minDateStr = minDate.toISOString().split('T')[0];
+    dateInput.min = minDateStr;
+    console.log(`Data mínima definida para Festa/Evento: ${minDateStr} (Horário atual: ${now.toLocaleString('pt-BR')})`);
+    
+    if (dateInput.value) {
+      const selectedDate = new Date(dateInput.value);
+      if (isNaN(selectedDate.getTime())) {
+        console.warn('Data inválida no campo:', dateInput.value);
+        toast('Formato de data inválido! Selecione uma data válida. 📅');
+        dateInput.value = '';
+        dateInput.focus();
+        return;
+      }
+      selectedDate.setHours(0, 0, 0, 0);
+      if (selectedDate <= minDate) {
+        console.warn(`Data selecionada (${dateInput.value}) é anterior ou igual à mínima (${minDateStr})`);
+        toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')} 📅`);
+        dateInput.value = '';
+        dateInput.focus();
+      }
     }
   }
 }
