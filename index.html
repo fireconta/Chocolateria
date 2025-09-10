@@ -127,7 +127,7 @@
     .pix-key { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; width: 100%; justify-content: space-between; }
     .pix-key span { flex: 1; text-align: left; }
     .pix-qr img { max-width: 200px; border-radius: 8px; }
-    .timer { font-weight: 700; color: var(--gold); animation: pulse 1.5s infinite; transition: all 0.3s ease; } /* Melhoria 3.2 */
+    .timer { font-weight: 700; color: var(--gold); animation: pulse 1.5s infinite; transition: all 0.3s ease; }
     .testimonials { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
     .testimonial-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; max-width: clamp(250px, 40%, 300px); text-align: left; }
     .testimonial-card p { margin: 0 0 8px; }
@@ -146,18 +146,20 @@
       font-size: clamp(0.9rem, 2vw, 1rem); 
     }
     .address-label { display: block; text-align: left; font-weight: 700; margin-bottom: 4px; font-size: clamp(0.9rem, 2vw, 1rem); }
-    .highlight { color: var presidencia: 700; }
+    .highlight { color: var(--gold); font-weight: 700; }
     .cta-text { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--success); font-weight: 700; margin: 10px 0; }
     #date:invalid, .whatsapp-input:invalid, .address-input:invalid, .name-input:invalid, .date-input:invalid { border: 2px solid var(--danger); }
     #form-status { margin: 8px 0; font-weight: 700; }
     select.address-input { background: transparent; color: var(--cream); }
     select.address-input option { background: var(--bg-soft); color: var(--cream); }
-    .error-message { color: var(--danger); display: none; font-size: clamp(0.8rem, 2vw, 0.9rem); margin-top: 4px; } /* Melhoria 1.1 */
+    .error-message { color: var(--danger); display: none; font-size: clamp(0.8rem, 2vw, 0.9rem); margin-top: 4px; }
+    #date-container { display: none; transition: opacity 0.3s ease, max-height 0.3s ease; max-height: 0; opacity: 0; overflow: hidden; }
+    #date-container.show { display: block; max-height: 100px; opacity: 1; }
     @media (max-width: 599px) {
       .modal-content { padding: 10px; }
       .modal-content h3 { font-size: clamp(1.1rem, 2.5vw, 1.3rem); }
       .address-label, .share-input, .address-input, .whatsapp-input, .name-input, .date-input, .error-message { font-size: clamp(0.8rem, 2vw, 0.9rem); }
-      .btn { padding: 10px 16px; font-size: personally: clamp(0.9rem, 2vw, 1rem); }
+      .btn { padding: 10px 16px; font-size: clamp(0.9rem, 2vw, 1rem); }
     }
   </style>
 </head>
@@ -299,12 +301,12 @@
         <label class="address-label">Tipo de Entrega:</label>
         <select id="delivery-type" class="address-input" aria-label="Tipo de entrega" aria-required="true">
           <option value="quick">Entrega Rápida (2 horas)</option>
-          <option value="event">Festa/Evento (selecionar data)</option>
+          <option value="event">Festa/Evento</option>
         </select>
       </div>
-      <div id="date-container">
+      <div id="date-container" style="display: none;">
         <label class="address-label">Data de Entrega:</label>
-        <input id="date" type="date" class="date-input" aria-label="Data de entrega" aria-required="true" />
+        <input id="date" type="date" class="date-input" aria-label="Data de entrega" aria-required="true" required />
         <span id="date-error" class="error-message"></span>
       </div>
       <div>
