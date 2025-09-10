@@ -1,8 +1,27 @@
 // Configurações manuais
 const config = {
+  pricing: {
+    basePrice: 189.90,
+    standardDiscount: 0.1, // 10% de desconto
+    standardDiscountValue: 18.99, // Valor do desconto padrão
+    groupDiscountValue: 17.09 // Valor do desconto de grupo
+  },
+  stock: {
+    initialStock: 5
+  },
+  share: {
+    groupDiscountThreshold: 3,
+    groupDiscountRate: 0.1, // 10% de desconto extra
+    shareLink: window.location.href
+  },
   pix: {
-    pixKey: "sua-chave-pix-aqui@example.com", // Substitua pela chave Pix real
-    pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix" // Substitua pela URL do QR Code real
+    pixKey: "sua-chave-pix-aqui@example.com",
+    pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix"
+  },
+  delivery: {
+    quickDeliveryHours: 2,
+    businessHoursStart: 8,
+    businessHoursEnd: 18
   },
   videos: [
     'Videos/Video01.mp4',
@@ -14,36 +33,19 @@ const config = {
     logo: 'Imagens/Logoluci.png',
     brigadeiro: 'Imagens/Imagem2.jpeg'
   },
-  share: {
-    baseUrl: window.location.origin + window.location.pathname,
-    hashtag: '#BrigadeiroGigante',
-    groupDiscountThreshold: 3,
-    groupDiscountRate: 0.1
-  },
-  pricing: {
-    basePrice: 189.90,
-    standardDiscount: 0.1, // 10% OFF padrão
-    standardDiscountValue: 18.99, // R$ 18,99
-    groupDiscountValue: 17.09 // R$ 17,09 (10% sobre R$ 170,91)
-  },
-  delivery: {
-    businessHoursStart: 8, // 8h
-    businessHoursEnd: 18, // 18h
-    quickDeliveryHours: 2 // Entrega rápida em 2 horas
-  },
-  stock: {
-    initialStock: 5 // Estoque inicial
-  }
+  hashtag: '#BrigadeiroGigante'
 };
 
-// Estado
+// Estado da aplicação
 const state = {
+  stock: config.stock.initialStock,
   group: {
-    groupCode: null,
+    groupCode: '',
     groupSize: 0,
     privateShared: false,
     publicShared: false
   },
+  deliveryType: 'quick',
   address: {
     cep: '',
     street: '',
@@ -53,34 +55,62 @@ const state = {
     state: ''
   },
   whatsapp: '',
-  name: '',
-  deliveryType: 'quick' // Tipo de entrega padrão
+  name: ''
 };
 
-// Controle de estoque
-let stockCount = config.stock.initialStock;
+// Variável para gerenciar o temporizador (Melhoria 2.1)
+let timerInterval = null;
 
-// Função para exibir toast
+// Função para exibir notificações
 function toast(message) {
-  const toastEl = document.getElementById('toast');
-  if (toastEl) {
-    toastEl.textContent = message;
-    toastEl.classList.add('show');
+  const toast = document.getElementById('toast');
+  if (toast) {
+    toast.textContent = message;
+    toast.classList.add('show');
     setTimeout(() => {
-      toastEl.classList.remove('show');
+      toast.classList.remove('show');
     }, 3000);
   }
 }
 
-// Scroll suave para elemento
+// Função para rolar até um elemento
 function scrollToEl(id) {
-  const element = document.querySelector(id);
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const el = document.querySelector(id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' });
   }
 }
 
-// Fechar modal
+// Função para alternar áudio do vídeo
+function toggleAudio(videoId) {
+  const video = document.getElementById(videoId);
+  const btn = document.querySelector(`[data-video-id="${videoId}"]`);
+  if (video && btn) {
+    video.muted = !video.muted;
+    btn.textContent = video.muted ? '🔇' : '🔊';
+    video.dataset.muted = video.muted;
+    toast(video.muted ? '🔇 Áudio desativado.' : '🔊 Áudio ativado!');
+  }
+}
+
+// Função para abrir modais
+function openDataModal() {
+  const dataModal = document.getElementById('data-modal');
+  if (dataModal) {
+    dataModal.classList.add('show');
+    toast('🍫 Preencha seus dados para receber seu brigadeiro gigante!');
+  }
+}
+
+function openShareModal() {
+  const shareModal = document.getElementById('share-modal');
+  if (shareModal) {
+    shareModal.classList.add('show');
+    toast('🎁 Convide amigos e ganhe um desconto especial!');
+  }
+}
+
+// Função para fechar modais
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
@@ -88,510 +118,299 @@ function closeModal(modalId) {
   }
 }
 
-// Copiar chave Pix
+// Função para copiar a chave Pix
 function copyPixKey() {
-  const pixKeyText = document.getElementById('pix-key-text');
-  if (pixKeyText) {
-    navigator.clipboard.writeText(pixKeyText.textContent).then(() => {
-      toast('Chave Pix copiada com sucesso! 📋');
+  const pixKey = document.getElementById('pix-key-text')?.textContent;
+  if (pixKey && navigator.clipboard) {
+    navigator.clipboard.writeText(pixKey).then(() => {
+      toast('🔑 Chave Pix copiada! Faça o pagamento agora! 😊');
     }).catch(() => {
-      toast('Erro ao copiar a chave Pix 😕');
+      toast('⚠️ Erro ao copiar a chave Pix. Tente novamente.');
     });
   }
 }
 
-// Verificar carregamento de imagens
-function checkImageLoad() {
-  const logoImg = document.querySelector('.logo');
-  const brigadeiroImg = document.querySelector('.thumb');
-  
-  if (logoImg) {
-    logoImg.addEventListener('error', () => {
-      console.error(`Erro ao carregar a imagem do logo: ${config.images.logo}`);
-      toast('Erro ao carregar o logo. Verifique o caminho da imagem.');
-    });
-    logoImg.addEventListener('load', () => {
-      console.log(`Logo carregado com sucesso: ${config.images.logo}`);
-    });
-  }
-  
-  if (brigadeiroImg) {
-    brigadeiroImg.addEventListener('error', () => {
-      console.error(`Erro ao carregar a imagem do brigadeiro: ${config.images.brigadeiro}`);
-      toast('Erro ao carregar a imagem do brigadeiro. Verifique o caminho da imagem.');
-    });
-    brigadeiroImg.addEventListener('load', () => {
-      console.log(`Imagem do brigadeiro carregada com sucesso: ${config.images.brigadeiro}`);
-    });
+// Função para aplicar código de grupo
+function applyGroupCode() {
+  const groupCodeInput = document.getElementById('group-code');
+  if (groupCodeInput) {
+    state.group.groupCode = groupCodeInput.value.trim();
+    state.group.groupSize = state.group.groupCode ? 3 : 0; // Simulação de tamanho do grupo
+    localStorage.setItem('chocolatriaState', JSON.stringify(state)); // Melhoria 2.2
+    toast(state.group.groupCode ? `🎉 Código ${state.group.groupCode} aplicado! Desconto extra ativado!` : '⚠️ Por favor, insira um código válido.');
+    updateGroupProgress();
   }
 }
 
-// Granulado animado
-function setupSprinkles() {
-  const spr = document.getElementById('sprinkles');
-  if (!spr) {
-    console.error('Sprinkles container not found');
-    return;
-  }
-  for (let i = 0; i < 160; i++) {
-    const el = document.createElement('i');
-    el.style.setProperty('--r', `${Math.random() * 80 - 40}deg`);
-    el.style.setProperty('--tx', `${Math.random() * 240 - 120}%`);
-    el.style.setProperty('--ty', `${Math.random() * 240 - 120}%`);
-    el.style.left = Math.random() * 100 + '%';
-    el.style.top = Math.random() * 100 + '%';
-    el.style.opacity = Math.random() * 0.35 + 0.65;
-    spr.appendChild(el);
-  }
+// Funções de compartilhamento
+function sharePrivateGroup() {
+  state.group.privateShared = true;
+  localStorage.setItem('chocolatriaState', JSON.stringify(state)); // Melhoria 2.2
+  const text = `Ei, já viu o Brigadeiro Gigante da Chocolatria? 🍫 É edição limitada e perfeito para festas! Junte-se ao meu grupo e vamos garantir 10% OFF extra! Use o código ${state.group.groupCode || 'ABC123'}: ${config.share.shareLink} ${config.hashtag}`;
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+  toast('📲 Compartilhado no WhatsApp! Chame mais amigos para o desconto!');
+  updateGroupProgress();
 }
 
-// Configurar vídeo do hero
-function setHeroVideo() {
-  const heroVideo = document.querySelector('#hero-video source');
-  if (!heroVideo) {
-    console.error('Hero video source not found');
-    toast('Erro ao carregar o vídeo principal');
-    return;
-  }
-  heroVideo.src = config.videos[0];
-  const videoElement = heroVideo.parentElement;
-  videoElement.load();
-
-  function tryPlay(attempts = 3, delay = 500) {
-    videoElement.play().catch(e => {
-      console.warn(`Autoplay attempt failed: ${e.message}`);
-      if (attempts > 0) {
-        setTimeout(() => tryPlay(attempts - 1, delay * 2), delay);
-      } else {
-        console.error('Autoplay failed after retries');
-        toast('Toque no vídeo para iniciar a reprodução');
-      }
+function sharePublicGroup() {
+  state.group.publicShared = true;
+  localStorage.setItem('chocolatriaState', JSON.stringify(state)); // Melhoria 2.2
+  const text = `Descobri o Brigadeiro Gigante da Chocolatria! 🍫 Edição limitada, perfeito para surpreender! Junte-se ao grupo com o código ${state.group.groupCode || 'ABC123'} e ganhe 10% OFF extra! ${config.share.shareLink} ${config.hashtag}`;
+  if (navigator.share) {
+    navigator.share({
+      title: 'Brigadeiro Gigante – Chocolatria',
+      text: text,
+      url: config.share.shareLink
+    }).then(() => {
+      toast('🌟 Compartilhado com sucesso! Convide mais amigos!');
+    }).catch(() => {
+      toast('⚠️ Erro ao compartilhar. Tente novamente.');
+    });
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      toast('📋 Texto copiado! Compartilhe nas suas redes! 😊');
     });
   }
+  updateGroupProgress();
+}
 
-  videoElement.addEventListener('loadeddata', () => {
-    tryPlay();
-  }, { once: true });
+function shareViaEmail() {
+  const subject = 'Experimente o Brigadeiro Gigante da Chocolatria!';
+  const body = `Oi! Conheça o Brigadeiro Gigante da Chocolatria! 🍫 É uma delícia artesanal de 1,2 kg, perfeito para festas ou presentear. Use o código ${state.group.groupCode || 'ABC123'} para ganhar 10% OFF extra no Pix! Confira: ${config.share.shareLink} ${config.hashtag}`;
+  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  toast('📧 Email pronto para enviar! Convide seus amigos!');
+  updateGroupProgress();
+}
 
-  videoElement.addEventListener('click', () => {
-    if (videoElement.paused) {
-      videoElement.play().catch(e => console.error('Manual play failed:', e));
-    }
+function copyShareLink() {
+  navigator.clipboard.writeText(config.share.shareLink).then(() => {
+    toast('🔗 Link copiado! Compartilhe com seus amigos! 😊');
+  }).catch(() => {
+    toast('⚠️ Erro ao copiar o link. Tente novamente.');
   });
 }
 
-// Configurar galeria de vídeos
-function setupVideoGallery() {
-  const gallery = document.getElementById('video-gallery');
-  if (!gallery) {
-    console.error('Video gallery container not found');
-    return;
+function updateGroupProgress() {
+  const groupProgress = document.getElementById('group-progress');
+  if (groupProgress) {
+    groupProgress.textContent = `Grupo: ${state.group.groupSize}/3 pessoas`;
   }
-  config.videos.slice(1).forEach((videoSrc, index) => {
-    const videoCard = document.createElement('div');
-    videoCard.className = 'video-card';
-    const videoId = `gallery-video-${index}`;
-    videoCard.innerHTML = `
-      <video autoplay loop playsinline muted id="${videoId}" data-muted="true">
-        <source src="${videoSrc}" type="video/mp4">
-      </video>
-      <button class="btn audio-btn" data-video-id="${videoId}" aria-controls="${videoId}" onclick="toggleAudio('${videoId}')" aria-label="Ativar áudio do vídeo ${index + 2}" tabindex="0">🔇</button>
-      <p class="mini muted">Vídeo ${index + 2}</p>
-    `;
-    gallery.appendChild(videoCard);
-  });
 }
 
-// Alternar áudio do vídeo
-function toggleAudio(videoId) {
-  const video = document.getElementById(videoId);
-  const button = document.querySelector(`[data-video-id="${videoId}"]`);
-  if (!video || !button) {
-    console.error(`Video or button not found for ID: ${videoId}`);
-    return;
+// Função para formatar CEP (Melhoria 1.2)
+function formatCep(value) {
+  value = value.replace(/\D/g, '');
+  if (value.length > 5) {
+    value = value.replace(/(\d{5})(\d{1,3})/, '$1-$2');
   }
-
-  const isMuted = video.getAttribute('data-muted') === 'true';
-
-  document.querySelectorAll('video').forEach(v => {
-    if (v.id !== videoId) {
-      v.muted = true;
-      v.setAttribute('data-muted', 'true');
-      const btn = document.querySelector(`[data-video-id="${v.id}"]`);
-      if (btn) {
-        btn.textContent = '🔇';
-        btn.setAttribute('aria-label', `Ativar áudio do vídeo ${v.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
-      }
-    }
-  });
-
-  video.muted = !isMuted;
-  video.setAttribute('data-muted', !isMuted);
-  button.textContent = isMuted ? '🔊' : '🔇';
-  button.setAttribute('aria-label', `${isMuted ? 'Desativar' : 'Ativar'} áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]}`);
-  toast(`Áudio do vídeo ${videoId.includes('hero') ? 'principal' : videoId.split('-')[2]} ${isMuted ? 'ativado' : 'desativado'}`);
+  return value;
 }
 
-// Configurar Intersection Observer
-function setupVideoObserver() {
-  if (!window.IntersectionObserver) {
-    console.warn('IntersectionObserver not supported');
-    return;
+// Função para formatar WhatsApp (Melhoria 1.2)
+function formatWhatsapp(value) {
+  value = value.replace(/\D/g, '');
+  if (value.length > 2) {
+    value = value.replace(/(\d{2})(\d{1,5})/, '($1) $2');
   }
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const video = entry.target;
-      const button = document.querySelector(`[data-video-id="${video.id}"]`);
-      if (entry.isIntersecting) {
-        video.play().catch(e => console.error(`Play failed for ${video.id}:`, e));
-        document.querySelectorAll('video').forEach(v => {
-          if (v.id !== video.id) {
-            v.muted = true;
-            v.setAttribute('data-muted', 'true');
-            v.pause();
-            const btn = document.querySelector(`[data-video-id="${v.id}"]`);
-            if (btn) {
-              btn.textContent = '🔇';
-              btn.setAttribute('aria-label', `Ativar áudio do vídeo ${v.id.includes('hero') ? 'principal' : v.id.split('-')[2]}`);
-            }
+  if (value.length > 10) {
+    value = value.replace(/(\(\d{2}\)\s\d{5})(\d{1,4})/, '$1-$2');
+  }
+  return value;
+}
+
+// Função para buscar endereço por CEP automaticamente
+function fetchAddress() {
+  const cepInput = document.getElementById('data-cep');
+  const cep = cepInput?.value.replace(/\D/g, '');
+  if (cep.length === 8) {
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.erro) {
+          toast('⚠️ CEP inválido. Por favor, verifique ou insira o endereço manualmente.');
+          enableManualAddressInput();
+          return;
+        }
+        state.address.cep = cep;
+        state.address.street = data.logradouro || '';
+        state.address.neighborhood = data.bairro || '';
+        state.address.city = data.localidade || '';
+        state.address.state = data.uf || '';
+        
+        const streetInput = document.getElementById('data-street');
+        const neighborhoodInput = document.getElementById('data-neighborhood');
+        const cityInput = document.getElementById('data-city');
+        const stateInput = document.getElementById('data-state');
+        const addressInput = document.getElementById('data-address-input');
+
+        if (streetInput && neighborhoodInput && cityInput && stateInput && addressInput) {
+          streetInput.value = state.address.street;
+          neighborhoodInput.value = state.address.neighborhood;
+          cityInput.value = state.address.city;
+          stateInput.value = state.address.state;
+          addressInput.style.display = 'block';
+
+          if (!state.address.street || !state.address.neighborhood) {
+            streetInput.removeAttribute('readonly');
+            neighborhoodInput.removeAttribute('readonly');
+            toast('📍 CEP encontrado! Complete a rua e o bairro, se necessário.');
+          } else {
+            streetInput.setAttribute('readonly', 'true');
+            neighborhoodInput.setAttribute('readonly', 'true');
+            toast('📍 Endereço encontrado! Confirme os dados.');
           }
-        });
-        video.muted = false;
-        video.setAttribute('data-muted', 'false');
-        if (button) {
-          button.textContent = '🔊';
-          button.setAttribute('aria-label', `Desativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
-          toast(`Áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]} ativado automaticamente`);
         }
-      } else {
-        video.pause();
-        video.muted = true;
-        video.setAttribute('data-muted', 'true');
-        if (button) {
-          button.textContent = '🔇';
-          button.setAttribute('aria-label', `Ativar áudio do vídeo ${video.id.includes('hero') ? 'principal' : video.id.split('-')[2]}`);
-        }
-      }
-    });
-  }, {
-    threshold: 0.5
-  });
-
-  document.querySelectorAll('video').forEach(video => observer.observe(video));
-}
-
-// Autoformatação do WhatsApp
-function formatWhatsApp(input) {
-  let value = input.value.replace(/\D/g, '');
-  if (value.length > 11) value = value.slice(0, 11);
-  
-  if (value.length <= 2) {
-    input.value = value;
-  } else if (value.length <= 7) {
-    input.value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+        validateForm();
+      })
+      .catch(() => {
+        toast('⚠️ Erro ao buscar o CEP. Insira o endereço manualmente.');
+        enableManualAddressInput();
+      });
   } else {
-    input.value = `(${value.slice(0, 2)}) ${value.slice(2, value.length - 4)}-${value.slice(-4)}`;
+    toast('⚠️ Por favor, insira um CEP válido (8 dígitos).');
+    enableManualAddressInput();
   }
 }
 
-// Autoformatação do CEP
-function formatCEP(input) {
-  let value = input.value.replace(/\D/g, '');
-  if (value.length > 8) value = value.slice(0, 8);
-  
-  if (value.length <= 5) {
-    input.value = value;
-  } else {
-    input.value = `${value.slice(0, 5)}-${value.slice(5)}`;
-  }
-  
-  console.log(`CEP digitado: ${value}`);
-  if (value.length === 8) {
-    console.log('CEP completo, chamando fetchAddress');
-    fetchAddress();
-  } else {
-    console.log('CEP incompleto, aguardando mais dígitos');
-  }
-}
-
-// Buscar endereço pelo CEP
-async function fetchAddress() {
-  const cepInput = document.getElementById('data-cep');
-  if (!cepInput) {
-    console.error('Campo CEP (#data-cep) não encontrado');
-    toast('Erro interno: campo CEP não encontrado 😕');
-    return;
-  }
-  const cep = cepInput.value.replace(/\D/g, '');
-  const cepRegex = /^\d{8}$/;
-  if (!cepRegex.test(cep)) {
-    console.warn(`CEP inválido: ${cep}`);
-    toast('CEP inválido! Use o formato 12345-678 📍');
-    updateFormStatus();
-    return;
-  }
-
-  console.log(`Buscando endereço para CEP: ${cep}`);
-  try {
-    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-    const data = await response.json();
-
-    if (data.erro) {
-      console.warn(`CEP não encontrado: ${cep}`);
-      toast('CEP não encontrado! 😕');
-      updateFormStatus();
-      return;
-    }
-
-    state.address.cep = cep;
-    state.address.street = data.logradouro || '';
-    state.address.neighborhood = data.bairro || '';
-    state.address.city = data.localidade || '';
-    state.address.state = data.uf || '';
-
-    const streetInput = document.getElementById('data-street');
-    const neighborhoodInput = document.getElementById('data-neighborhood');
-    const cityInput = document.getElementById('data-city');
-    const stateInput = document.getElementById('data-state');
-    const addressInput = document.getElementById('data-address-input');
-
-    if (streetInput && neighborhoodInput && cityInput && stateInput && addressInput) {
-      streetInput.value = data.logradouro || '';
-      neighborhoodInput.value = data.bairro || '';
-      cityInput.value = data.localidade || '';
-      stateInput.value = data.uf || '';
-      addressInput.style.display = 'block';
-      cepInput.value = `${cep.slice(0, 5)}-${cep.slice(5)}`;
-      console.log('Endereço carregado:', data);
-      toast('Endereço carregado! Insira o número, WhatsApp e nome. ✅');
-    } else {
-      console.error('Campos de endereço não encontrados');
-      toast('Erro interno: campos de endereço não encontrados 😕');
-    }
-    updateFormStatus();
-  } catch (error) {
-    console.error('Erro ao buscar endereço:', error.message);
-    toast('Erro ao buscar endereço. Verifique sua conexão e tente novamente. 🔄');
-    updateFormStatus();
-  }
-}
-
-// Atualizar status do formulário
-function updateFormStatus() {
-  const deliveryType = document.getElementById('delivery-type');
-  const dateInput = document.getElementById('date');
-  const cepInput = document.getElementById('data-cep');
+// Função para habilitar preenchimento manual de endereço
+function enableManualAddressInput() {
   const streetInput = document.getElementById('data-street');
-  const numberInput = document.getElementById('data-number');
   const neighborhoodInput = document.getElementById('data-neighborhood');
-  const cityInput = document.getElementById('data-city');
-  const stateInput = document.getElementById('data-state');
-  const whatsappInput = document.getElementById('data-whatsapp');
-  const nameInput = document.getElementById('data-name');
-  const statusEl = document.getElementById('form-status');
+  const addressInput = document.getElementById('data-address-input');
+  if (streetInput && neighborhoodInput && addressInput) {
+    streetInput.removeAttribute('readonly');
+    neighborhoodInput.removeAttribute('readonly');
+    addressInput.style.display = 'block';
+  }
+}
+
+// Função para validar formulário (Melhoria 1.1)
+function validateForm() {
+  const cep = document.getElementById('data-cep')?.value.replace(/\D/g, '');
+  const number = document.getElementById('data-number')?.value;
+  const whatsapp = document.getElementById('data-whatsapp')?.value.replace(/\D/g, '');
+  const name = document.getElementById('data-name')?.value;
+  const deliveryType = document.getElementById('delivery-type')?.value;
+  const date = document.getElementById('date')?.value;
+  const street = document.getElementById('data-street')?.value;
+  const neighborhood = document.getElementById('data-neighborhood')?.value;
+  const city = document.getElementById('data-city')?.value;
+  const stateInput = document.getElementById('data-state')?.value;
   const confirmBtn = document.getElementById('confirm-data-btn');
 
-  if (!deliveryType || !dateInput || !cepInput || !streetInput || !numberInput || !neighborhoodInput || !cityInput || !stateInput || !whatsappInput || !nameInput || !statusEl || !confirmBtn) {
-    console.error('Um ou mais elementos do formulário não encontrados');
-    toast('Erro interno: formulário incompleto 😕');
-    return;
-  }
+  const cepError = document.getElementById('cep-error');
+  const streetError = document.getElementById('street-error');
+  const numberError = document.getElementById('number-error');
+  const neighborhoodError = document.getElementById('neighborhood-error');
+  const cityError = document.getElementById('city-error');
+  const stateError = document.getElementById('state-error');
+  const whatsappError = document.getElementById('whatsapp-error');
+  const nameError = document.getElementById('name-error');
+  const dateError = document.getElementById('date-error');
 
-  let isDateValid = true;
-  if (deliveryType.value === 'event') {
-    const selectedDateStr = dateInput.value;
-    if (selectedDateStr) {
-      const selectedDate = new Date(selectedDateStr);
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const currentHour = now.getHours();
-      selectedDate.setHours(0, 0, 0, 0);
-      isDateValid = !isNaN(selectedDate.getTime()) && selectedDate > today;
-      if (selectedDate.getTime() === today.getTime()) {
-        isDateValid = false;
-      }
-      console.log(`Validação de data (Festa/Evento): ${selectedDateStr} -> ${isDateValid ? 'Válida' : 'Inválida'}`);
-    } else {
-      isDateValid = false;
-      console.log('Data não preenchida para Festa/Evento');
+  const isCepValid = cep && cep.length === 8;
+  const isNumberValid = number && number.trim() !== '';
+  const isWhatsappValid = whatsapp && whatsapp.length >= 10 && whatsapp.length <= 11;
+  const isNameValid = name && name.trim().length >= 2;
+  const isDateValid = deliveryType === 'quick' || (date && new Date(date) >= new Date());
+  const isStreetValid = street && street.trim() !== '';
+  const isNeighborhoodValid = neighborhood && neighborhood.trim() !== '';
+  const isCityValid = city && city.trim() !== '';
+  const isStateValid = stateInput && stateInput.trim() !== '';
+
+  if (cepError) cepError.style.display = isCepValid ? 'none' : 'block';
+  if (cepError) cepError.textContent = isCepValid ? '' : 'Por favor, insira um CEP válido (8 dígitos).';
+  if (streetError) streetError.style.display = isStreetValid ? 'none' : 'block';
+  if (streetError) streetError.textContent = isStreetValid ? '' : 'Por favor, insira a rua.';
+  if (numberError) numberError.style.display = isNumberValid ? 'none' : 'block';
+  if (numberError) numberError.textContent = isNumberValid ? '' : 'Por favor, insira o número.';
+  if (neighborhoodError) neighborhoodError.style.display = isNeighborhoodValid ? 'none' : 'block';
+  if (neighborhoodError) neighborhoodError.textContent = isNeighborhoodValid ? '' : 'Por favor, insira o bairro.';
+  if (cityError) cityError.style.display = isCityValid ? 'none' : 'block';
+  if (cityError) cityError.textContent = isCityValid ? '' : 'Por favor, insira a cidade.';
+  if (stateError) stateError.style.display = isStateValid ? 'none' : 'block';
+  if (stateError) stateError.textContent = isStateValid ? '' : 'Por favor, insira o estado.';
+  if (whatsappError) whatsappError.style.display = isWhatsappValid ? 'none' : 'block';
+  if (whatsappError) whatsappError.textContent = isWhatsappValid ? '' : 'Por favor, insira um WhatsApp válido.';
+  if (nameError) nameError.style.display = isNameValid ? 'none' : 'block';
+  if (nameError) nameError.textContent = isNameValid ? '' : 'Por favor, insira um nome válido.';
+  if (dateError) dateError.style.display = isDateValid ? 'none' : 'block';
+  if (dateError) dateError.textContent = isDateValid ? '' : 'Por favor, selecione uma data válida.';
+
+  if (isCepValid && isNumberValid && isWhatsappValid && isNameValid && isDateValid && isStreetValid && isNeighborhoodValid && isCityValid && isStateValid) {
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.style.opacity = '1';
+      confirmBtn.style.cursor = 'pointer';
     }
   } else {
-    console.log('Entrega Rápida selecionada, validando horário comercial');
-  }
-
-  const cep = cepInput.value.replace(/\D/g, '');
-  const isCepValid = /^\d{8}$/.test(cep);
-  console.log(`Validação de CEP: ${cep} -> ${isCepValid ? 'Válido' : 'Inválido'}`);
-
-  const isAddressValid = cepInput.value.trim() && numberInput.value.trim() && cityInput.value.trim() && stateInput.value.trim();
-  console.log(`Validação de endereço: CEP=${cepInput.value}, Número=${numberInput.value}, Cidade=${cityInput.value}, Estado=${stateInput.value} -> ${isAddressValid ? 'Válido' : 'Inválido'}`);
-
-  const whatsapp = whatsappInput.value.replace(/\D/g, '');
-  const isWhatsAppValid = /^\d{10,11}$/.test(whatsapp);
-  console.log(`Validação de WhatsApp: ${whatsapp} -> ${isWhatsAppValid ? 'Válido' : 'Inválido'}`);
-
-  const name = nameInput.value.trim();
-  const isNameValid = /^[A-Za-z\s]{3,}$/.test(name);
-  console.log(`Validação de nome: ${name} -> ${isNameValid ? 'Válido' : 'Inválido'}`);
-
-  let statusMessage = '';
-  if (deliveryType.value === 'event' && !isDateValid) statusMessage += 'Data de entrega inválida ou não preenchida. ';
-  if (!isCepValid) statusMessage += 'CEP inválido. ';
-  if (!isAddressValid) statusMessage += 'Endereço incompleto (número, cidade ou estado faltando). ';
-  if (!isWhatsAppValid) statusMessage += 'WhatsApp inválido. ';
-  if (!isNameValid) statusMessage += 'Nome inválido (mínimo 3 letras). ';
-
-  const allValid = (deliveryType.value === 'quick' || isDateValid) && isCepValid && isAddressValid && isWhatsAppValid && isNameValid;
-  if (allValid) {
-    statusEl.textContent = 'Todos os campos foram preenchidos corretamente! ✅';
-    statusEl.style.color = 'var(--success)';
-    confirmBtn.disabled = false;
-    confirmBtn.style.opacity = '1';
-    confirmBtn.style.cursor = 'pointer';
-    console.log('Formulário válido, botão Confirmar Dados habilitado');
-  } else {
-    statusEl.textContent = statusMessage || 'Preencha todos os campos obrigatórios! 🚫';
-    statusEl.style.color = 'var(--danger)';
-    confirmBtn.disabled = true;
-    confirmBtn.style.opacity = '0.6';
-    confirmBtn.style.cursor = 'not-allowed';
-    console.log('Formulário inválido:', statusMessage);
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.style.opacity = '0.6';
+      confirmBtn.style.cursor = 'not-allowed';
+    }
   }
 }
 
-// Abrir modal de dados
-function openDataModal() {
-  const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
-  if (!sabor) {
-    toast('Selecione um sabor antes de continuar! 🍫');
-    scrollToEl('#comprar');
-    return;
-  }
-  if (stockCount === 0) {
-    toast('Estoque esgotado! Aguarde a reposição. ⏳');
-    return;
-  }
-  const dataModal = document.getElementById('data-modal');
-  if (dataModal) {
-    dataModal.classList.add('show');
-    document.getElementById('date').value = '';
-    document.getElementById('data-cep').value = state.address.cep || '';
-    document.getElementById('data-street').value = state.address.street || '';
-    document.getElementById('data-number').value = state.address.number || '';
-    document.getElementById('data-neighborhood').value = state.address.neighborhood || '';
-    document.getElementById('data-city').value = state.address.city || '';
-    document.getElementById('data-state').value = state.address.state || '';
-    document.getElementById('data-whatsapp').value = state.whatsapp || '';
-    document.getElementById('data-name').value = state.name || '';
-    document.getElementById('data-address-input').style.display = state.address.cep ? 'block' : 'none';
-    const deliveryType = document.getElementById('delivery-type');
-    deliveryType.value = state.deliveryType;
-
-    updateDateInput();
-
-    const whatsappInput = document.getElementById('data-whatsapp');
-    const cepInput = document.getElementById('data-cep');
-    const dateInput = document.getElementById('date');
-    const numberInput = document.getElementById('data-number');
-    const nameInput = document.getElementById('data-name');
-    const newDeliveryType = deliveryType.cloneNode(true);
-
-    deliveryType.parentNode.replaceChild(newDeliveryType, deliveryType);
-    const newWhatsappInput = whatsappInput.cloneNode(true);
-    const newCepInput = cepInput.cloneNode(true);
-    const newDateInput = dateInput.cloneNode(true);
-    const newNumberInput = numberInput.cloneNode(true);
-    const newNameInput = nameInput.cloneNode(true);
-    whatsappInput.parentNode.replaceChild(newWhatsappInput, whatsappInput);
-    cepInput.parentNode.replaceChild(newCepInput, cepInput);
-    dateInput.parentNode.replaceChild(newDateInput, dateInput);
-    numberInput.parentNode.replaceChild(newNumberInput, numberInput);
-    nameInput.parentNode.replaceChild(newNameInput, nameInput);
-
-    newDeliveryType.addEventListener('change', () => {
-      state.deliveryType = newDeliveryType.value;
-      updateDateInput();
-      updateFormStatus();
-    });
-    newWhatsappInput.addEventListener('input', () => {
-      formatWhatsApp(newWhatsappInput);
-      state.whatsapp = newWhatsappInput.value.replace(/\D/g, '');
-      updateFormStatus();
-    });
-    newCepInput.addEventListener('input', () => {
-      formatCEP(newCepInput);
-      updateFormStatus();
-    });
-    newDateInput.addEventListener('input', updateFormStatus);
-    newNumberInput.addEventListener('input', updateFormStatus);
-    newNameInput.addEventListener('input', updateFormStatus);
-
-    console.log('Modal de dados aberto, inicializando validação');
-    updateFormStatus();
-  } else {
-    console.error('Modal #data-modal não encontrado');
-    toast('Erro interno: modal de dados não encontrado 😕');
-  }
-}
-
-// Confirmar dados do modal
+// Função para confirmar dados
 function confirmData() {
-  updateFormStatus();
-  const confirmBtn = document.getElementById('confirm-data-btn');
-  if (confirmBtn.disabled) {
-    toast('Preencha todos os campos corretamente antes de confirmar! 🚫');
-    return;
-  }
-  if (state.deliveryType === 'event' && !validateDate()) return;
-  const numberInput = document.getElementById('data-number');
-  const whatsappInput = document.getElementById('data-whatsapp');
-  const nameInput = document.getElementById('data-name');
-  if (numberInput) state.address.number = numberInput.value.trim();
-  if (whatsappInput) state.whatsapp = whatsappInput.value.replace(/\D/g, '');
-  if (nameInput) state.name = nameInput.value.trim();
-  if (!validateAddress()) return;
-  if (!validateWhatsApp()) return;
-  if (!validateName()) return;
-  checkout();
-}
+  const cep = document.getElementById('data-cep')?.value.replace(/\D/g, '');
+  const number = document.getElementById('data-number')?.value;
+  const whatsapp = document.getElementById('data-whatsapp')?.value.replace(/\D/g, '');
+  const name = document.getElementById('data-name')?.value;
+  const deliveryType = document.getElementById('delivery-type')?.value;
+  const street = document.getElementById('data-street')?.value;
+  const neighborhood = document.getElementById('data-neighborhood')?.value;
+  const city = document.getElementById('data-city')?.value;
+  const stateInput = document.getElementById('data-state')?.value;
 
-// Enviar pedido ao servidor
-async function saveOrderToServer(orderData) {
-  try {
-    const response = await fetch('save_order.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(orderData)
-    });
-    const result = await response.json();
-    if (result.success) {
-      stockCount--;
-      updateStock();
-      toast('Dados do pedido salvos com sucesso! ✅');
+  if (cep && number && whatsapp && name && deliveryType && street && neighborhood && city && stateInput) {
+    state.address.cep = cep;
+    state.address.number = number;
+    state.whatsapp = whatsapp;
+    state.name = name;
+    state.deliveryType = deliveryType;
+    state.address.street = street;
+    state.address.neighborhood = neighborhood;
+    state.address.city = city;
+    state.address.state = stateInput;
+
+    if (state.stock > 0) {
+      state.stock--;
+      localStorage.setItem('chocolatriaState', JSON.stringify(state)); // Melhoria 2.2
+      document.getElementById('stock-alert').textContent = `Apenas ${state.stock} unidades disponíveis!`;
+      checkout();
     } else {
-      console.error('Erro ao salvar pedido:', result.error);
-      toast('Erro ao salvar os dados do pedido. Tente novamente. 😕');
-    }
-  } catch (error) {
-    console.error('Erro na requisição ao servidor:', error);
-    toast('Erro ao salvar os dados do pedido. Tente novamente. 🔄');
-  }
-}
-
-// Atualizar estoque
-function updateStock() {
-  const stockAlert = document.getElementById('stock-alert');
-  if (stockAlert) {
-    stockAlert.textContent = `Apenas ${stockCount} unidades disponíveis!`;
-    if (stockCount === 0) {
-      stockAlert.textContent = 'Estoque esgotado! Aguarde a reposição. ⏳';
+      toast('⚠️ Estoque esgotado! Volte em breve para novas unidades! 😔');
     }
   }
 }
 
-// Checkout
+// Função para iniciar o temporizador (Melhoria 2.1)
+function startTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval); // Limpa o temporizador anterior
+  }
+  let timeLeft = 15 * 60; // 15 minutos em segundos
+  const timerEl = document.getElementById('timer');
+  if (timerEl) {
+    timerEl.textContent = '15:00';
+    timerInterval = setInterval(() => {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      timerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+      timeLeft--;
+      if (timeLeft < 0) {
+        clearInterval(timerInterval);
+        timerEl.textContent = 'Expirado!';
+        toast('⏰ O tempo para a oferta especial acabou! Tente novamente! 😔');
+      }
+    }, 1000);
+  }
+}
+
+// Função para finalizar o pedido
 function checkout() {
   const sabor = document.querySelector('input[name="sabor"]:checked')?.nextElementSibling.textContent.trim();
   const now = new Date();
@@ -603,57 +422,61 @@ function checkout() {
     if (currentHour >= config.delivery.businessHoursStart && currentHour < config.delivery.businessHoursEnd) {
       const deliveryTime = new Date(now.getTime() + config.delivery.quickDeliveryHours * 60 * 60 * 1000);
       deliveryDate = deliveryTime.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-      deliveryNote = `Entrega estimada em até 2 horas (${deliveryDate}) após confirmação do pagamento.`;
+      deliveryNote = `Seu brigadeiro será entregue em até 2 horas (${deliveryDate}) após a confirmação do pagamento!`;
     } else {
       const nextBusinessDay = new Date(now);
       nextBusinessDay.setDate(now.getDate() + (now.getDay() === 6 ? 2 : 1));
       nextBusinessDay.setHours(10, 0, 0, 0); // Entrega padrão às 10h do próximo dia útil
       deliveryDate = nextBusinessDay.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-      deliveryNote = `Fora do horário comercial. Entraremos em contato no próximo dia útil para confirmar o horário de entrega. Data estimada: ${deliveryDate}.`;
+      deliveryNote = `Estamos fora do horário comercial, mas não se preocupe! Entraremos em contato no próximo dia útil (${deliveryDate}) para confirmar a entrega rapidinha!`;
     }
   } else {
     const data = document.getElementById('date')?.value;
     deliveryDate = new Date(data).toLocaleDateString('pt-BR');
-    deliveryNote = `Entrega agendada para ${deliveryDate}.`;
+    deliveryNote = `Seu brigadeiro está agendado para ${deliveryDate}! Prepararemos com todo carinho!`;
   }
 
   let preco = config.pricing.basePrice;
   const groupCode = state.group.groupCode || '';
 
-  let discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
+  let discountText = `Desconto de 10% (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
   preco = preco * (1 - config.pricing.standardDiscount);
   let groupDiscountApplied = false;
   if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
     preco = preco * (1 - config.share.groupDiscountRate);
     groupDiscountApplied = true;
-    discountText = `Desconto: 10% OFF (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% OFF extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
+    discountText = `Desconto de 10% (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
   }
 
   const summary = `
-    <strong>Resumo do Pedido:</strong><br>
+    <strong>Resumo do Seu Pedido:</strong><br>
     • Sabor: ${sabor}<br>
     • Nome: ${state.name}<br>
-    • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep}<br>
-    • Frete: Grátis (filial a 2,7 km)<br>
+    • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep.replace(/(\d{5})(\d{3})/, '$1-$2')}<br>
+    • Frete: Grátis (nossa filial está pertinho, a 2,7 km!)<br>
     • Tipo de Entrega: ${state.deliveryType === 'quick' ? 'Entrega Rápida (2 horas)' : 'Festa/Evento'}<br>
     • ${deliveryNote}<br>
     • WhatsApp: ${state.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}<br>
     • Preço: R$ ${preco.toFixed(2).replace('.', ',')}<br>
     ${groupCode ? '• Código do Grupo: ' + groupCode + '<br>' : ''}
     • <strong>${discountText}</strong><br>
-    • <strong class="highlight">Feito sob encomenda após pagamento!</strong>
+    • <strong class="highlight">Feito com amor e entregue fresquinho após o pagamento!</strong>
   `;
   
   const orderSummary = document.getElementById('order-summary');
   const pixKeyText = document.getElementById('pix-key-text');
+  const pixQrCode = document.getElementById('pix-qr-code');
   const confirmationModal = document.getElementById('confirmation-modal');
   const dataModal = document.getElementById('data-modal');
-  if (orderSummary && pixKeyText && confirmationModal && dataModal) {
+  if (orderSummary && pixKeyText && pixQrCode && confirmationModal && dataModal) {
     orderSummary.innerHTML = summary;
-    pixKeyText.textContent = config.pix.pixKey;
+    pixKeyText.innerHTML = config.pix.pixKey; // Usar innerHTML para garantir acessibilidade
+    pixQrCode.src = config.pix.pixQrCodeUrl;
     dataModal.classList.remove('show');
     confirmationModal.classList.add('show');
-    toast('🚚 Dados confirmados! Prossiga para o pagamento. 💸');
+    pixKeyText.focus(); // Melhoria 3.1: Foco automático
+    startTimer(); // Melhoria 2.1: Inicia/reinicia o temporizador
+    toast('🎉 Pedido confirmado, ${state.name}! Faça o pagamento via Pix para garantir sua delícia! 😋');
 
     const orderData = {
       name: state.name,
@@ -684,280 +507,94 @@ function checkout() {
   }
 }
 
-// Abrir modal de compartilhamento
-function openShareModal() {
-  const shareModal = document.getElementById('share-modal');
-  if (shareModal) {
-    shareModal.classList.add('show');
-    updateGroupProgress();
-  }
-}
-
-// Compartilhar grupo privado (WhatsApp)
-function sharePrivateGroup() {
-  const groupCode = state.group.groupCode || generateGroupCode();
-  state.group.groupCode = groupCode;
-  state.group.privateShared = true;
-  const shareUrl = `${config.share.baseUrl}?ref=${groupCode}`;
-  const message = `Junte-se ao meu grupo para comprar o Brigadeiro Gigante com 10% OFF extra (R$ 17,09)! Use o código ${groupCode}: ${shareUrl}`;
-  
-  if (navigator.share) {
-    navigator.share({
-      title: 'Brigadeiro Gigante – Chocolatria',
-      text: message,
-      url: shareUrl
-    }).then(() => {
-      toast('Link compartilhado com sucesso! 🎉');
-      updateGroupProgress();
-    }).catch(() => {
-      toast('Erro ao compartilhar. Copie o link manualmente. 🔗');
-    });
-  } else {
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
-    toast('Compartilhe o link pelo WhatsApp! 📲');
-    updateGroupProgress();
-  }
-}
-
-// Compartilhar grupo público (redes sociais)
-function sharePublicGroup() {
-  const message = `Descubra o Brigadeiro Gigante da Chocolatria! Edição limitada, perfeito para surpreender! ${config.share.hashtag} ${config.share.baseUrl}`;
-  
-  if (navigator.share) {
-    navigator.share({
-      title: 'Brigadeiro Gigante – Chocolatria',
-      text: message,
-      url: config.share.baseUrl
-    }).then(() => {
-      state.group.publicShared = true;
-      toast('Post compartilhado nas redes sociais! 📸');
-      updateGroupProgress();
-    }).catch(() => {
-      toast('Erro ao compartilhar. Copie o link manualmente. 🔗');
-    });
-  } else {
-    toast(`Compartilhe nas redes com ${config.share.hashtag}: ${config.share.baseUrl} 📷`);
-    state.group.publicShared = true;
-    updateGroupProgress();
-  }
-}
-
-// Compartilhar por e-mail
-function shareViaEmail() {
-  const groupCode = state.group.groupCode || generateGroupCode();
-  state.group.groupCode = groupCode;
-  state.group.privateShared = true;
-  const shareUrl = `${config.share.baseUrl}?ref=${groupCode}`;
-  const subject = 'Convite: Brigadeiro Gigante com 10% OFF!';
-  const body = `Junte-se ao meu grupo para comprar o Brigadeiro Gigante com 10% OFF extra (R$ 17,09)! Use o código ${groupCode}: ${shareUrl}`;
-  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  toast('Convite enviado por e-mail! 📧');
-  updateGroupProgress();
-}
-
-// Copiar link de compartilhamento
-function copyShareLink() {
-  const groupCode = state.group.groupCode || generateGroupCode();
-  state.group.groupCode = groupCode;
-  state.group.privateShared = true;
-  const shareUrl = `${config.share.baseUrl}?ref=${groupCode}`;
-  navigator.clipboard.writeText(shareUrl).then(() => {
-    toast('Link de convite copiado! 🔗');
-    updateGroupProgress();
-  }).catch(() => {
-    toast('Erro ao copiar o link 😕');
-  });
-}
-
-// Gerar código de grupo
-function generateGroupCode() {
-  return Math.random().toString(36).substr(2, 6).toUpperCase();
-}
-
-// Aplicar código de grupo
-function applyGroupCode() {
-  const groupCodeInput = document.getElementById('group-code');
-  if (!groupCodeInput) return;
-  const code = groupCodeInput.value.trim().toUpperCase();
-  if (code && code.length !== 6) {
-    toast('Código de grupo inválido! Use o formato ABC123 😕');
-    return;
-  }
-  state.group.groupCode = code || state.group.groupCode;
-  state.group.groupSize = code ? Math.floor(Math.random() * 5) + 1 : state.group.groupSize;
-  updateGroupProgress();
-  if (code) {
-    toast(`Código ${code} aplicado! Grupo: ${state.group.groupSize}/${config.share.groupDiscountThreshold} pessoas 🎉`);
-  }
-}
-
-// Atualizar progresso do grupo
-function updateGroupProgress() {
-  const progressEl = document.getElementById('group-progress');
-  if (progressEl) {
-    const status = state.group.privateShared && state.group.publicShared ? 'Completo' : 'Pendente';
-    progressEl.innerHTML = `Grupo: ${state.group.groupSize}/${config.share.groupDiscountThreshold} pessoas | Status: ${status}`;
-    if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
-      toast('Desconto de 10% extra (R$ 17,09) aplicado para o grupo! 🎁');
-    }
-  }
-}
-
-// Verificar código de grupo na URL
-function checkUrlForGroupCode() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const ref = urlParams.get('ref');
-  if (ref) {
-    state.group.groupCode = ref.toUpperCase();
-    state.group.groupSize = Math.floor(Math.random() * 5) + 1;
-    const groupCodeInput = document.getElementById('group-code');
-    if (groupCodeInput) groupCodeInput.value = ref;
-    updateGroupProgress();
-    toast(`Código ${ref} aplicado automaticamente! 🎉`);
-  }
-}
-
-// Validação de Data
-function validateDate() {
-  if (state.deliveryType === 'quick') {
-    return true; // Entrega rápida não exige validação de data
-  }
-  const dateInput = document.getElementById('date');
-  if (!dateInput) {
-    console.error('Campo de data (#date) não encontrado');
-    toast('Erro interno: campo de data não encontrado. 😕');
-    return false;
-  }
-  const selectedDateStr = dateInput.value;
-  if (!selectedDateStr) {
-    console.warn('Nenhuma data selecionada');
-    toast('Selecione a data de entrega! 📅');
-    dateInput.focus();
-    return false;
-  }
-  const selectedDate = new Date(selectedDateStr);
-  if (isNaN(selectedDate.getTime())) {
-    console.warn('Data inválida fornecida:', selectedDateStr);
-    toast('Formato de data inválido! Use o formato DD/MM/AAAA 📅');
-    dateInput.value = '';
-    dateInput.focus();
-    return false;
-  }
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const currentHour = now.getHours();
-  
-  selectedDate.setHours(0, 0, 0, 0);
-  
-  console.log(`Validando data: ${selectedDateStr} (Selecionada: ${selectedDate.toLocaleDateString('pt-BR')}, Hoje: ${today.toLocaleDateString('pt-BR')}, Horário: ${now.toLocaleTimeString('pt-BR')})`);
-  
-  if (selectedDate <= today) {
-    toast(`Data inválida! Escolha uma data futura para festas ou eventos. 📅`);
-    dateInput.value = '';
-    dateInput.focus();
-    return false;
-  }
-  
-  return true;
-}
-
-// Configurar data mínima
-function updateDateInput() {
-  const deliveryType = document.getElementById('delivery-type');
-  const dateInput = document.getElementById('date');
-  const dateContainer = document.getElementById('date-container');
-  if (!deliveryType || !dateInput || !dateContainer) {
-    console.error('Elementos de entrega ou data não encontrados');
-    toast('Erro interno: elementos de entrega não encontrados. 😕');
-    return;
-  }
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const currentHour = now.getHours();
-  
-  if (deliveryType.value === 'quick') {
-    dateContainer.style.display = 'none';
-    dateInput.value = '';
-    console.log('Entrega rápida selecionada, campo de data oculto');
-  } else {
-    dateContainer.style.display = 'block';
-    let minDate = new Date(today);
-    minDate.setDate(today.getDate() + 1); // Data mínima é o próximo dia
-    if (currentHour >= config.delivery.businessHoursEnd || currentHour < config.delivery.businessHoursStart) {
-      minDate.setDate(today.getDate() + (now.getDay() === 6 ? 2 : 1)); // Próximo dia útil
-    }
-    const minDateStr = minDate.toISOString().split('T')[0];
-    dateInput.min = minDateStr;
-    console.log(`Data mínima definida para Festa/Evento: ${minDateStr} (Horário atual: ${now.toLocaleString('pt-BR')})`);
-    
-    if (dateInput.value) {
-      const selectedDate = new Date(dateInput.value);
-      if (isNaN(selectedDate.getTime())) {
-        console.warn('Data inválida no campo:', dateInput.value);
-        toast('Formato de data inválido! Selecione uma data válida. 📅');
-        dateInput.value = '';
-        dateInput.focus();
-        return;
+// Função para salvar pedido no servidor
+function saveOrderToServer(orderData) {
+  fetch('save_order.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orderData)
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        toast('📦 Pedido salvo com sucesso! Entraremos em contato em breve! 😊');
+      } else {
+        toast('⚠️ Erro ao salvar o pedido. Tente novamente.');
       }
-      selectedDate.setHours(0, 0, 0, 0);
-      if (selectedDate <= minDate) {
-        console.warn(`Data selecionada (${dateInput.value}) é anterior ou igual à mínima (${minDateStr})`);
-        toast(`Data inválida! Escolha a partir de ${minDate.toLocaleDateString('pt-BR')} 📅`);
-        dateInput.value = '';
-        dateInput.focus();
-      }
-    }
-  }
-}
-
-// Validação de Endereço
-function validateAddress() {
-  if (!state.address.cep || !state.address.number || !state.address.city || !state.address.state) {
-    toast('Endereço incompleto! Busque o CEP e insira o número. 📍');
-    return false;
-  }
-  return true;
-}
-
-// Validação de WhatsApp
-function validateWhatsApp() {
-  const whatsappInput = document.getElementById('data-whatsapp');
-  if (!whatsappInput) return false;
-  const whatsapp = whatsappInput.value.replace(/\D/g, '');
-  const whatsappRegex = /^\d{10,11}$/;
-  if (!whatsappRegex.test(whatsapp)) {
-    toast('Número de WhatsApp inválido! Use o formato (XX) XXXXX-XXXX 📱');
-    whatsappInput.classList.add('invalid');
-    whatsappInput.focus();
-    return false;
-  }
-  whatsappInput.classList.remove('invalid');
-  return true;
-}
-
-// Validação de Nome
-function validateName() {
-  const nameInput = document.getElementById('data-name');
-  if (!nameInput) return false;
-  const name = nameInput.value.trim();
-  const nameRegex = /^[A-Za-z\s]{3,}$/;
-  if (!nameRegex.test(name)) {
-    toast('Nome inválido! Use pelo menos 3 letras (apenas letras e espaços). 😊');
-    nameInput.classList.add('invalid');
-    nameInput.focus();
-    return false;
-  }
-  nameInput.classList.remove('invalid');
-  return true;
+    })
+    .catch(() => {
+      toast('⚠️ Erro ao salvar o pedido. Tente novamente.');
+    });
 }
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
-  checkImageLoad();
-  setupSprinkles();
-  setHeroVideo();
-  setupVideoGallery();
-  setupVideoObserver();
-  checkUrlForGroupCode();
-  updateStock();
+  // Carregar estado do localStorage (Melhoria 2.2)
+  const savedState = localStorage.getItem('chocolatriaState');
+  if (savedState) {
+    Object.assign(state, JSON.parse(savedState));
+    updateGroupProgress();
+    if (state.group.groupCode) {
+      document.getElementById('group-code').value = state.group.groupCode;
+    }
+  }
+
+  // Configurar estoque inicial
+  const stockAlert = document.getElementById('stock-alert');
+  if (stockAlert) {
+    stockAlert.textContent = `Apenas ${state.stock} unidades disponíveis!`;
+  }
+
+  // Configurar galeria de vídeos
+  const videoGallery = document.getElementById('video-gallery');
+  if (videoGallery) {
+    config.videos.forEach((videoSrc, index) => {
+      const videoCard = document.createElement('div');
+      videoCard.className = 'video-card';
+      videoCard.innerHTML = `
+        <video autoplay loop playsinline muted data-muted="true">
+          <source src="${videoSrc}" type="video/mp4">
+        </video>
+        <button class="btn audio-btn" data-video-id="video-${index}" aria-controls="video-${index}" onclick="toggleAudio('video-${index}')" aria-label="Ativar/desativar áudio do vídeo ${index + 1}">🔇</button>
+      `;
+      videoCard.querySelector('video').id = `video-${index}`;
+      videoGallery.appendChild(videoCard);
+    });
+  }
+
+  // Configurar controle de tipo de entrega
+  const deliveryTypeSelect = document.getElementById('delivery-type');
+  const dateContainer = document.getElementById('date-container');
+  if (deliveryTypeSelect && dateContainer) {
+    deliveryTypeSelect.addEventListener('change', () => {
+      state.deliveryType = deliveryTypeSelect.value;
+      dateContainer.style.display = state.deliveryType === 'event' ? 'block' : 'none';
+      validateForm();
+    });
+  }
+
+  // Configurar validação de formulário e máscaras (Melhoria 1.2)
+  const cepInput = document.getElementById('data-cep');
+  const whatsappInput = document.getElementById('data-whatsapp');
+  const inputs = document.querySelectorAll('#data-cep, #data-number, #data-whatsapp, #data-name, #date, #data-street, #data-neighborhood, #data-city, #data-state');
+  inputs.forEach(input => {
+    input.addEventListener('input', validateForm);
+  });
+
+  if (cepInput) {
+    cepInput.addEventListener('input', () => {
+      cepInput.value = formatCep(cepInput.value);
+      const cep = cepInput.value.replace(/\D/g, '');
+      if (cep.length === 8) {
+        fetchAddress();
+      }
+    });
+  }
+
+  if (whatsappInput) {
+    whatsappInput.addEventListener('input', () => {
+      whatsappInput.value = formatWhatsapp(whatsappInput.value);
+      validateForm();
+    });
+  }
 });
