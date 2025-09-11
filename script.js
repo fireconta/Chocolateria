@@ -16,7 +16,7 @@ const config = {
     shareLink: window.location.href
   },
   pix: {
-    pixKey: "00020126820014br.gov.bcb.pix2560pix.treeal.com/qr/v3/at/29a8f1b1-fe28-4a02-bfe8-657d58c9a9235204000053039865802BR5915MB_COMPANY_LTDA6010RIO_BONITO62070503***63044DEB", // Substitua pela sua chave Pix real
+    pixKey: "sua-chave-pix-aqui@example.com", // Substitua pela sua chave Pix real
     pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix" // Substitua pela URL real do QR Code
   },
   delivery: {
@@ -84,18 +84,18 @@ function updatePriceDisplay() {
   }
 }
 
-// Função para exibir notificações
+// Função para exibir notificações (toast)
 function toast(message) {
   const toast = document.getElementById('toast');
-  if (toast) {
-    toast.textContent = message;
-    toast.classList.add('show');
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, 3000);
-  } else {
-    console.error('Toast element not found');
+  if (!toast) {
+    console.error('Erro: Elemento #toast não encontrado no DOM.');
+    return;
   }
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
 }
 
 // Função para rolar até um elemento
@@ -153,42 +153,58 @@ function closeModal(modalId) {
   }
 }
 
-// Função para copiar a chave Pix
+// Função para copiar a chave Pix (corrigida)
 function copyPixKey() {
   const pixKeyText = document.getElementById('pix-key-text');
   if (!pixKeyText) {
     toast('⚠️ Erro: Chave Pix não encontrada.');
-    console.error('Element #pix-key-text not found');
+    console.error('Elemento #pix-key-text não encontrado no DOM.');
     return;
   }
   const pixKey = pixKeyText.textContent.trim();
   if (!pixKey || pixKey === 'undefined' || pixKey === '') {
     toast('⚠️ Erro: Chave Pix inválida ou não definida.');
-    console.error('Invalid or undefined Pix key:', pixKey);
+    console.error('Chave Pix inválida:', pixKey);
     return;
   }
+
+  // Tenta usar a Clipboard API
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(pixKey)
       .then(() => {
         toast('🔑 Chave Pix copiada com sucesso! 😊');
       })
       .catch((err) => {
-        toast('⚠️ Erro ao copiar a chave Pix. Tente novamente.');
-        console.error('Error copying Pix key:', err);
+        console.error('Erro ao copiar com Clipboard API:', err);
+        // Tenta o fallback mesmo em caso de erro na Clipboard API
+        fallbackCopyPixKey(pixKey);
       });
   } else {
-    // Fallback para navegadores sem suporte a navigator.clipboard ou contexto inseguro
-    const textarea = document.createElement('textarea');
-    textarea.value = pixKey;
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand('copy');
+    // Usa o método de fallback diretamente
+    fallbackCopyPixKey(pixKey);
+  }
+}
+
+// Função de fallback para copiar a chave Pix
+function fallbackCopyPixKey(pixKey) {
+  const textarea = document.createElement('textarea');
+  textarea.value = pixKey;
+  textarea.style.position = 'fixed'; // Evita interferência no layout
+  textarea.style.opacity = '0'; // Torna invisível
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
       toast('🔑 Chave Pix copiada com sucesso! 😊');
-    } catch (err) {
+    } else {
       toast('⚠️ Erro ao copiar a chave Pix. Tente novamente.');
-      console.error('Fallback copy error:', err);
+      console.error('Falha ao executar document.execCommand("copy")');
     }
+  } catch (err) {
+    toast('⚠️ Erro ao copiar a chave Pix. Tente novamente.');
+    console.error('Erro no fallback de cópia:', err);
+  } finally {
     document.body.removeChild(textarea);
   }
 }
@@ -638,7 +654,7 @@ function checkout() {
     saveOrderToServer(orderData);
   } else {
     toast('⚠️ Erro ao exibir o resumo do pedido. Tente novamente.');
-    console.error('Missing elements:', { orderSummary, pixKeyText, pixQrCode, confirmationModal, dataModal });
+    console.error('Elementos ausentes:', { orderSummary, pixKeyText, pixQrCode, confirmationModal, dataModal });
   }
 
   // Resetar formulário
