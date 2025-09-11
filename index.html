@@ -264,16 +264,16 @@
       <h2 style="text-align:center;margin-bottom:24px">O que nossos clientes dizem</h2>
       <div class="testimonials">
         <div class="testimonial-card">
-          <p>"O brigadeiro gigante foi o destaque da festa! Entrega rápida e sabor incrível!"</p>
-          <p class="mini muted">– Ana S., São Paulo</p>
+          <p>"Comprei o Brigadeiro Gigante para o aniversário da minha filha, e foi um sucesso absoluto! A textura cremosa e o sabor do chocolate ao leite conquistaram todos. A entrega foi pontual, e a embalagem de presente deixou tudo ainda mais especial!"</p>
+          <p class="mini muted">– Ana Clara S., São Paulo</p>
         </div>
         <div class="testimonial-card">
-          <p>"Feito sob encomenda, chegou perfeito! Recomendo!"</p>
-          <p class="mini muted">– João P., Campinas</p>
+          <p>"Pedi o sabor 54% Cacau para um jantar com amigos, e todos ficaram impressionados! É gigante mesmo, e o cuidado artesanal faz toda a diferença. O atendimento via WhatsApp foi superatencioso, recomendo demais!"</p>
+          <p class="mini muted">– João Pedro R., Campinas</p>
         </div>
         <div class="testimonial-card">
-          <p>"A apresentação é impecável, perfeito para presentear!"</p>
-          <p class="mini muted">– Maria L., Santos</p>
+          <p>"Presenteei minha equipe com o Brigadeiro Gigante de Chocolate Branco, e foi uma surpresa inesquecível! A casquinha crocante e o recheio cremoso são perfeitos. Chegou fresquinho e bem embalado, nota 10!"</p>
+          <p class="mini muted">– Mariana L., Santos</p>
         </div>
       </div>
     </div>
@@ -352,8 +352,8 @@
       <div class="pix-details">
         <h4>Pague com Pix</h4>
         <div class="pix-key">
-          <span id="pix-key-text"></span>
-          <button class="btn" onclick="copyPixKey()">Copiar Chave</button>
+          <span id="pix-key-text" aria-label="Chave Pix para pagamento"></span>
+          <button class="btn" onclick="copyPixKey()" aria-label="Copiar chave Pix">Copiar Chave</button>
         </div>
         <div class="pix-qr">
           <img id="pix-qr-code" src="" alt="QR Code para pagamento Pix" />
@@ -361,7 +361,7 @@
         <p class="mini muted">Entraremos em contato pelo WhatsApp para confirmar tudo direitinho! 😊</p>
       </div>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
-        <button class="btn" onclick="closeModal('confirmation-modal')">Fechar</button>
+        <button class="btn" onclick="closeModal('confirmation-modal')" aria-label="Fechar modal de confirmação">Fechar</button>
       </div>
     </div>
   </div>
