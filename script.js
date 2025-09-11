@@ -8,7 +8,7 @@ const config = {
     groupDiscountValue: 17.09 // Valor do desconto de grupo
   },
   stock: {
-    initialStock: 5
+    initialStock: 10 // Estoque inicial de 10 unidades
   },
   share: {
     groupDiscountThreshold: 3,
@@ -40,6 +40,7 @@ const config = {
 // Estado da aplicação
 const state = {
   stock: config.stock.initialStock,
+  lastStockUpdate: null, // Rastreia a última atualização do estoque
   group: {
     groupCode: '',
     groupSize: 0,
@@ -516,6 +517,30 @@ function startTimer() {
   }
 }
 
+// Função para atualizar o estoque a cada 30 minutos
+function updateStockPeriodically() {
+  const now = new Date().getTime();
+  const lastUpdate = state.lastStockUpdate ? parseInt(state.lastStockUpdate, 10) : now;
+  const thirtyMinutesInMs = 30 * 60 * 1000; // 30 minutos em milissegundos
+
+  // Verifica se passaram 30 minutos desde a última atualização
+  if (now - lastUpdate >= thirtyMinutesInMs) {
+    state.stock = config.stock.initialStock; // Reseta para 10
+    state.lastStockUpdate = now; // Atualiza o horário da última atualização
+    localStorage.setItem('chocolatriaState', JSON.stringify(state));
+    toast(`📦 Estoque reabastecido! ${state.stock} unidades disponíveis!`);
+  }
+
+  // Atualiza a exibição do estoque
+  const stockAlert = document.getElementById('stock-alert');
+  if (stockAlert) {
+    stockAlert.textContent = `Apenas ${state.stock} unidades disponíveis!`;
+  }
+
+  // Agenda a próxima verificação
+  setTimeout(updateStockPeriodically, 60 * 1000); // Verifica a cada 1 minuto
+}
+
 // Função para finalizar o pedido
 function checkout() {
   const flavorInput = document.querySelector('input[name="sabor"]:checked');
@@ -660,10 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Configurar estoque inicial
-  const stockAlert = document.getElementById('stock-alert');
-  if (stockAlert) {
-    stockAlert.textContent = `Apenas ${state.stock} unidades disponíveis!`;
-  }
+  updateStockPeriodically(); // Inicia a verificação do estoque
 
   // Configurar galeria de vídeos
   const videoGallery = document.getElementById('video-gallery');
