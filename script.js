@@ -565,7 +565,7 @@ function checkout() {
     const orderData = {
       name: state.name,
       date: deliveryDate,
-      deliveryType: state.deliveryType === 'quick' ? 'Entrega Rápida (2 horas)' : 'Fasta/Evento',
+      deliveryType: state.deliveryType === 'quick' ? 'Entrega Rápida (2 horas)' : 'Festa/Evento',
       deliveryNote: deliveryNote,
       cep: state.address.cep.replace(/(\d{5})(\d{3})/, '$1-$2'),
       street: state.address.street,
@@ -592,9 +592,9 @@ function checkout() {
   }
 }
 
-// Função para salvar pedido no servidor
+// Função para salvar pedido no servidor (atualizada para Netlify Functions)
 function saveOrderToServer(orderData) {
-  fetch('save_order.php', {
+  fetch('/api/save-order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(orderData)
@@ -604,7 +604,7 @@ function saveOrderToServer(orderData) {
       if (data.success) {
         toast('📦 Pedido salvo com sucesso! Entraremos em contato em breve! 😊');
       } else {
-        toast('⚠️ Erro ao salvar o pedido. Tente novamente.');
+        toast('⚠️ Erro ao salvar o pedido: ' + data.message);
       }
     })
     .catch(() => {
