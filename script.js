@@ -16,7 +16,7 @@ const config = {
     shareLink: window.location.href
   },
   pix: {
-    pixKey: "00020126860014br.gov.bcb.pix2564pix.bancoe2.com.br/qr/v3/at/c7a85d14-e3ac-4f9f-9a8a-ff5514466b815204000053039865802BR5919GALAXY_BETTING_LTDA6009SAO_PAULO62070503***6304886C", // Substitua pela sua chave Pix real
+    pixKey: "sua-chave-pix-aqui@example.com", // Substitua pela sua chave Pix real
     pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix" // Substitua pela URL real do QR Code
   },
   delivery: {
