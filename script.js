@@ -16,8 +16,8 @@ const config = {
     shareLink: window.location.href
   },
   pix: {
-    pixKey: "TE AMO",
-    pixQrCodeUrl: "https://www.instagram.com/ghabriellavitoria5?igsh=aTduY2tsem13eDdk"
+    pixKey: "sua-chave-pix-aqui@example.com", // Substitua pela sua chave Pix real
+    pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix" // Substitua pela URL real do QR Code
   },
   delivery: {
     quickDeliveryHours: 2,
@@ -92,6 +92,8 @@ function toast(message) {
     setTimeout(() => {
       toast.classList.remove('show');
     }, 3000);
+  } else {
+    console.error('Toast element not found');
   }
 }
 
@@ -126,7 +128,7 @@ function openDataModal() {
     if (deliveryTypeSelect && dateContainer && dateInput) {
       dateContainer.classList.toggle('show', deliveryTypeSelect.value === 'event');
       if (deliveryTypeSelect.value === 'quick') {
-        dateInput.value = ''; // Reseta o campo de data ao mudar para Entrega Rápida
+        dateInput.value = '';
         state.date = '';
       }
     }
@@ -152,13 +154,41 @@ function closeModal(modalId) {
 
 // Função para copiar a chave Pix
 function copyPixKey() {
-  const pixKey = document.getElementById('pix-key-text')?.textContent;
-  if (pixKey && navigator.clipboard) {
-    navigator.clipboard.writeText(pixKey).then(() => {
-      toast('🔑 Chave Pix copiada! Faça o pagamento agora! 😊');
-    }).catch(() => {
+  const pixKeyText = document.getElementById('pix-key-text');
+  if (!pixKeyText) {
+    toast('⚠️ Erro: Chave Pix não encontrada.');
+    console.error('Element #pix-key-text not found');
+    return;
+  }
+  const pixKey = pixKeyText.textContent.trim();
+  if (!pixKey || pixKey === 'undefined' || pixKey === '') {
+    toast('⚠️ Erro: Chave Pix inválida ou não definida.');
+    console.error('Invalid or undefined Pix key:', pixKey);
+    return;
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(pixKey)
+      .then(() => {
+        toast('🔑 Chave Pix copiada com sucesso! 😊');
+      })
+      .catch((err) => {
+        toast('⚠️ Erro ao copiar a chave Pix. Tente novamente.');
+        console.error('Error copying Pix key:', err);
+      });
+  } else {
+    // Fallback para navegadores sem suporte a navigator.clipboard ou contexto inseguro
+    const textarea = document.createElement('textarea');
+    textarea.value = pixKey;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      toast('🔑 Chave Pix copiada com sucesso! 😊');
+    } catch (err) {
       toast('⚠️ Erro ao copiar a chave Pix. Tente novamente.');
-    });
+      console.error('Fallback copy error:', err);
+    }
+    document.body.removeChild(textarea);
   }
 }
 
@@ -167,7 +197,7 @@ function applyGroupCode() {
   const groupCodeInput = document.getElementById('group-code');
   if (groupCodeInput) {
     state.group.groupCode = groupCodeInput.value.trim();
-    state.group.groupSize = state.group.groupCode ? 3 : 0; // Simulação de tamanho do grupo
+    state.group.groupSize = state.group.groupCode ? 3 : 0;
     localStorage.setItem('chocolatriaState', JSON.stringify(state));
     toast(state.group.groupCode ? `🎉 Código ${state.group.groupCode} aplicado! Desconto extra ativado!` : '⚠️ Por favor, insira um código válido.');
     updateGroupProgress();
@@ -551,15 +581,16 @@ function checkout() {
   const pixQrCode = document.getElementById('pix-qr-code');
   const confirmationModal = document.getElementById('confirmation-modal');
   const dataModal = document.getElementById('data-modal');
+  
   if (orderSummary && pixKeyText && pixQrCode && confirmationModal && dataModal) {
     orderSummary.innerHTML = summary;
-    pixKeyText.innerHTML = config.pix.pixKey;
-    pixQrCode.src = config.pix.pixQrCodeUrl;
+    pixKeyText.textContent = config.pix.pixKey || 'Chave Pix não configurada';
+    pixQrCode.src = config.pix.pixQrCodeUrl || 'https://placehold.co/200x200?text=QR+Code+Não+Disponível';
+    pixQrCode.alt = config.pix.pixKey ? `QR Code para pagamento Pix (${config.pix.pixKey})` : 'QR Code não disponível';
     dataModal.classList.remove('show');
     confirmationModal.classList.add('show');
     pixKeyText.focus();
     startTimer();
-
     toast(`🎉 Pedido confirmado, ${state.name}! Faça o pagamento via Pix para garantir sua delícia! 😋`);
 
     const orderData = {
@@ -580,19 +611,23 @@ function checkout() {
     };
 
     saveOrderToServer(orderData);
-
-    document.getElementById('date').value = '';
-    document.getElementById('data-number').value = '';
-    document.getElementById('data-whatsapp').value = '';
-    document.getElementById('data-name').value = '';
-    state.address.number = '';
-    state.whatsapp = '';
-    state.name = '';
-    state.date = '';
+  } else {
+    toast('⚠️ Erro ao exibir o resumo do pedido. Tente novamente.');
+    console.error('Missing elements:', { orderSummary, pixKeyText, pixQrCode, confirmationModal, dataModal });
   }
+
+  // Resetar formulário
+  document.getElementById('date').value = '';
+  document.getElementById('data-number').value = '';
+  document.getElementById('data-whatsapp').value = '';
+  document.getElementById('data-name').value = '';
+  state.address.number = '';
+  state.whatsapp = '';
+  state.name = '';
+  state.date = '';
 }
 
-// Função para salvar pedido no servidor (atualizada para Netlify Functions)
+// Função para salvar pedido no servidor
 function saveOrderToServer(orderData) {
   fetch('/api/save-order', {
     method: 'POST',
