@@ -17,7 +17,7 @@ const config = {
   },
   pix: {
     pixKey: "TE AMO",
-    pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix"
+    pixQrCodeUrl: "https://www.instagram.com/ghabriellavitoria5?igsh=aTduY2tsem13eDdk"
   },
   delivery: {
     quickDeliveryHours: 2,
