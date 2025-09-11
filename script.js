@@ -16,7 +16,7 @@ const config = {
     shareLink: window.location.href
   },
   pix: {
-    pixKey: "sua-chave-pix-aqui@example.com", // Substitua pela sua chave Pix real
+    pixKey: "00020126820014br.gov.bcb.pix2560pix.treeal.com/qr/v3/at/29a8f1b1-fe28-4a02-bfe8-657d58c9a9235204000053039865802BR5915MB_COMPANY_LTDA6010RIO_BONITO62070503***63044DEB", // Substitua pela sua chave Pix real
     pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix" // Substitua pela URL real do QR Code
   },
   delivery: {
