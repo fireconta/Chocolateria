@@ -126,8 +126,33 @@
     .modal-content h3 { margin: 0 0 12px; font-size: clamp(1.2rem, 3vw, 1.5rem); }
     .modal-content p { margin: 0 0 16px; }
     .pix-details { display: flex; flex-direction: column; gap: 12px; align-items: center; }
-    .pix-key { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; width: 100%; justify-content: space-between; }
-    .pix-key span { flex: 1; text-align: left; }
+    .pix-key { 
+      background: rgba(255,255,255,0.1); 
+      padding: 8px 12px; 
+      border-radius: 8px; 
+      width: 100%; 
+      text-align: left; 
+      overflow: hidden; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      max-width: 100%; 
+    }
+    .pix-key span { 
+      flex: 1; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+      max-width: 100%; 
+      display: inline-block; 
+    }
+    .pix-key-container { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 8px; 
+      width: 100%; 
+      align-items: center; 
+    }
     .pix-qr img { max-width: 200px; border-radius: 8px; }
     .timer { font-weight: 700; color: var(--gold); animation: pulse 1.5s infinite; transition: all 0.3s ease; }
     .testimonials { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
@@ -351,8 +376,10 @@
       <div id="order-summary"></div>
       <div class="pix-details">
         <h4>Pague com Pix</h4>
-        <div class="pix-key">
-          <span id="pix-key-text" aria-label="Chave Pix para pagamento"></span>
+        <div class="pix-key-container">
+          <div class="pix-key">
+            <span id="pix-key-text" aria-label="Chave Pix para pagamento"></span>
+          </div>
           <button class="btn" onclick="copyPixKey()" aria-label="Copiar chave Pix">Copiar Chave</button>
         </div>
         <div class="pix-qr">
