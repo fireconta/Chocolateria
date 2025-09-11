@@ -16,7 +16,7 @@ const config = {
     shareLink: window.location.href
   },
   pix: {
-    pixKey: "sua-chave-pix-aqui@example.com",
+    pixKey: "TE AMO",
     pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix"
   },
   delivery: {
