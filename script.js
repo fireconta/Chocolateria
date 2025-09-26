@@ -549,10 +549,12 @@ function confirmData() {
 }
 
 function startTimer() {
+    // Limpa qualquer timer existente
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
+
     const timerEl = document.getElementById('timer');
     const progressBar = document.getElementById('progress-bar');
     if (!timerEl || !progressBar) {
@@ -560,24 +562,33 @@ function startTimer() {
         toast('⚠️ Erro ao iniciar o timer.');
         return;
     }
-    let timeLeft = 15 * 60;
+
+    let timeLeft = 15 * 60; // 15 minutos em segundos
     const totalTime = 15 * 60;
     timerEl.textContent = '15:00';
     progressBar.style.width = '100%';
+
     timerInterval = setInterval(() => {
-        if (timeLeft <= 0) {
+        if (document.getElementById('confirmation-modal').classList.contains('show')) {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerEl.textContent = 'Expirado!';
+                progressBar.style.width = '0%';
+                toast('⏰ O tempo para a oferta especial acabou! Tente novamente! 😔');
+                return;
+            }
+
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            progressBar.style.width = `${(timeLeft / totalTime) * 100}%`;
+            timeLeft--;
+        } else {
+            // Pausa o timer se o modal não estiver visível
             clearInterval(timerInterval);
             timerInterval = null;
-            timerEl.textContent = 'Expirado!';
-            progressBar.style.width = '0%';
-            toast('⏰ O tempo para a oferta especial acabou! Tente novamente! 😔');
-            return;
         }
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        timerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        progressBar.style.width = `${(timeLeft / totalTime) * 100}%`;
-        timeLeft--;
     }, 1000);
 }
 
@@ -670,7 +681,7 @@ function checkout() {
 
     if (orderSummary && pixKeyText && pixQrCode && confirmationModal && dataModal) {
         orderSummary.innerHTML = summary;
-        pixKeyText.textContent = pixKey; // Exibe a chave Pix completa
+        pixKeyText.textContent = pixKey;
         pixKeyText.setAttribute('aria-live', 'polite');
         pixQrCode.src = pixQrCodeUrl || 'https://placehold.co/200x200?text=QR+Code+Não+Disponível';
         pixQrCode.alt = pixKey ? `QR Code para pagamento Pix` : 'QR Code não disponível';
@@ -753,7 +764,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateStockPeriodically();
-    startTimer();
 
     const videoGallery = document.getElementById('video-gallery');
     if (videoGallery) {
