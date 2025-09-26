@@ -22,7 +22,7 @@ const config = {
         },
         branco: {
             price: 188.91,
-            pixKey: "00020126970014BR.GOV.BCB.PIX0136a941f5ec-74bf-46e3-9229-ac94121b18a302351x Brigadeiro Gigante Chocolate Bra5204000053039865406188.915802BR5924Chocolatria LTDA6009SAO PAULO62140510kwkFvcDdTf63046ECE",
+            pixKey: "00020126970014BR.GOV.BCB.PIX0136a941f5ec-74bf-46e3-9229-ac94121b18a302351x Brigadeiro Gigante Chocolate Bra5204000053039865406188.915802BR5924Ulisses Marques Ferreira6009SAO PAULO62140510kwkFvcDdTf63046ECE",
             pixQrCodeUrl: "Imagens/qrcode188.png"
         }
     },
