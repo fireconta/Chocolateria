@@ -17,7 +17,7 @@ const config = {
     pix: {
         aoLeite: {
             price: 170.91,
-            pixKey: "00020126830014BR.GOV.BCB.PIX0136a941f5ec-74bf-46e3-9229-ac94121b18a302211x Brigadeiro Gigante5204000053039865406170.915802BR5924Chocolatria LTDA6009SAO PAULO62140510EHDkAua1k263047664",
+            pixKey: "00020126830014BR.GOV.BCB.PIX0136a941f5ec-74bf-46e3-9229-ac94121b18a302211x Brigadeiro Gigante5204000053039865406170.915802BR5924Ulisses Marques Ferreira6009SAO PAULO62140510EHDkAua1k263047664",
             pixQrCodeUrl: "Imagens/qrcode170.png"
         },
         branco: {
