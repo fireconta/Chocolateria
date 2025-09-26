@@ -1,13 +1,13 @@
 const config = {
     pricing: {
-        basePrice: 189.90,
-        whiteChocolateExtra: 20.00,
+        basePrice: 170.91, // Atualizado para refletir o preço base (Ao Leite/54% Cacau)
+        whiteChocolateExtra: 18.00, // Ajustado para manter R$ 188,91 com desconto padrão
         standardDiscount: 0.1,
         standardDiscountValue: 18.99,
         groupDiscountValue: 17.09
     },
     stock: {
-        initialStock: 10
+        initialStock: 5 // Ajustado para refletir o estoque inicial de 5 unidades
     },
     share: {
         groupDiscountThreshold: 3,
@@ -15,8 +15,16 @@ const config = {
         shareLink: window.location.href
     },
     pix: {
-        pixKey: "aaaaa",
-        pixQrCodeUrl: "https://placehold.co/200x200?text=QR+Code+Pix"
+        aoLeite: {
+            price: 170.91,
+            pixKey: "00020101021126360014BR.GOV.BCB.PIX0111123456789005204000053039865406170.915802BR5920Chocolatria LTDA6015Sao Paulo62070503***6304A2B3",
+            pixQrCodeUrl: "Imagens/qrcode170.png"
+        },
+        branco: {
+            price: 188.91,
+            pixKey: "00020101021126360014BR.GOV.BCB.PIX0111123456789015204000053039865406188.915802BR5920Chocolatria LTDA6015Sao Paulo62070503***6304C4D5",
+            pixQrCodeUrl: "Imagens/qrcode188.png"
+        }
     },
     delivery: {
         quickDeliveryHours: 2,
@@ -56,7 +64,8 @@ const state = {
     },
     whatsapp: '',
     name: '',
-    date: ''
+    date: '',
+    selectedFlavor: 'ao-leite' // Novo estado para rastrear o sabor selecionado
 };
 
 let timerInterval = null;
@@ -67,15 +76,12 @@ function updatePriceDisplay() {
     const priceElement = document.getElementById('price');
     if (!flavorInput || !priceElement) {
         console.error('Erro: Elemento de sabor ou #price não encontrado.');
+        toast('⚠️ Erro ao atualizar o preço. Tente novamente.');
         return;
     }
 
-    const flavor = flavorInput.value;
-    let price = config.pricing.basePrice;
-    if (flavor === 'branco') {
-        price += config.pricing.whiteChocolateExtra;
-    }
-    price = price * (1 - config.pricing.standardDiscount);
+    state.selectedFlavor = flavorInput.value;
+    let price = config.pix[state.selectedFlavor === 'branco' ? 'branco' : 'aoLeite'].price;
     if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
         price = price * (1 - config.share.groupDiscountRate);
     }
@@ -101,6 +107,7 @@ function scrollToEl(id) {
         el.scrollIntoView({ behavior: 'smooth' });
     } else {
         console.error(`Erro: Elemento ${id} não encontrado.`);
+        toast('⚠️ Seção não encontrada.');
     }
 }
 
@@ -114,6 +121,7 @@ function toggleAudio(videoId) {
         toast(video.muted ? '🔇 Áudio desativado.' : '🔊 Áudio ativado!');
     } else {
         console.error(`Erro: Vídeo ${videoId} ou botão não encontrado.`);
+        toast('⚠️ Erro ao ajustar o áudio.');
     }
 }
 
@@ -135,6 +143,7 @@ function openDataModal() {
         toast('🍫 Preencha seus dados para receber seu brigadeiro gigante!');
     } else {
         console.error('Erro: Modal #data-modal não encontrado.');
+        toast('⚠️ Erro ao abrir o formulário.');
     }
 }
 
@@ -145,6 +154,7 @@ function openShareModal() {
         toast('🎁 Convide amigos e ganhe um desconto especial!');
     } else {
         console.error('Erro: Modal #share-modal não encontrado.');
+        toast('⚠️ Erro ao abrir o modal de compartilhamento.');
     }
 }
 
@@ -152,29 +162,46 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('show');
+        if (modalId === 'confirmation-modal' && timerInterval) {
+            clearInterval(timerInterval);
+        }
     } else {
         console.error(`Erro: Modal ${modalId} não encontrado.`);
+        toast('⚠️ Erro ao fechar o modal.');
     }
 }
 
+let copyPixKeyTimeout = null;
 function copyPixKey() {
+    if (copyPixKeyTimeout) return; // Debounce
+
     const pixKeyText = document.getElementById('pix-key-text');
-    if (!pixKeyText) {
-        toast('⚠️ Erro: Chave Pix não encontrada.');
-        console.error('Elemento #pix-key-text não encontrado.');
+    const copyBtn = document.querySelector('#confirmation-modal .btn[onclick="copyPixKey()"]');
+    if (!pixKeyText || !copyBtn) {
+        toast('⚠️ Erro: Chave Pix ou botão não encontrado.');
+        console.error('Elementos ausentes:', { pixKeyText, copyBtn });
         return;
     }
-    const pixKey = config.pix.pixKey.trim();
-    if (!pixKey || pixKey === 'aaaaa') {
+
+    const pixKey = config.pix[state.selectedFlavor === 'branco' ? 'branco' : 'aoLeite'].pixKey;
+    if (!pixKey) {
         toast('⚠️ Erro: Chave Pix inválida ou não configurada.');
         console.error('Chave Pix inválida:', pixKey);
         return;
     }
 
+    copyPixKeyTimeout = setTimeout(() => {
+        copyPixKeyTimeout = null;
+    }, 1000);
+
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(pixKey)
             .then(() => {
                 toast('🔑 Chave Pix copiada com sucesso! 😊');
+                copyBtn.style.background = 'var(--success)';
+                setTimeout(() => {
+                    copyBtn.style.background = 'linear-gradient(135deg, var(--gold), #e6c78a)';
+                }, 1000);
             })
             .catch((err) => {
                 console.error('Erro ao copiar com Clipboard API:', err);
@@ -194,8 +221,13 @@ function fallbackCopyPixKey(pixKey) {
     textarea.select();
     try {
         const successful = document.execCommand('copy');
-        if (successful) {
+        const copyBtn = document.querySelector('#confirmation-modal .btn[onclick="copyPixKey()"]');
+        if (successful && copyBtn) {
             toast('🔑 Chave Pix copiada com sucesso! 😊');
+            copyBtn.style.background = 'var(--success)';
+            setTimeout(() => {
+                copyBtn.style.background = 'linear-gradient(135deg, var(--gold), #e6c78a)';
+            }, 1000);
         } else {
             toast('⚠️ Erro ao copiar a chave Pix. Tente novamente.');
             console.error('Falha ao executar document.execCommand("copy")');
@@ -219,6 +251,7 @@ function applyGroupCode() {
         updatePriceDisplay();
     } else {
         console.error('Erro: Elemento #group-code não encontrado.');
+        toast('⚠️ Erro ao aplicar o código.');
     }
 }
 
@@ -238,7 +271,7 @@ function sharePublicGroup() {
     state.group.publicShared = true;
     localStorage.setItem('chocolatriaState', JSON.stringify(state));
     const groupCode = state.group.groupCode || 'ABC123';
-    const text = `🍫 Venha se deliciar com o Brigadeiro Gigante da Chocolatria! 😍 1,2 kg de puro sabor artesanal, perfeito para compartilhar com quem ama chocolate! Junte-se ao grupo com o código ${groupCode} e garanta 10% OFF extra (R$ 17,09) no Pix. Não perca, é edição limitada! 🔥 ${config.share.shareLink} ${config.hashtag}`;
+    const text = `🍫 Venha se deliciar com o Brigadeiro Gigante da Chocolatria! 😍 1,2 kg de puro sabor artesanal, perfeito para compartilhar com quem ama chocolate! Junte-se ao grupo com o código ${groupCode} e garanta 10% OFF extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) no Pix. Não perca, é edição limitada! 🔥 ${config.share.shareLink} ${config.hashtag}`;
     if (navigator.share) {
         navigator.share({
             title: 'Brigadeiro Gigante – Chocolatria',
@@ -274,6 +307,7 @@ function updateGroupProgress() {
         groupProgress.textContent = `Grupo: ${state.group.groupSize}/3 pessoas`;
     } else {
         console.error('Erro: Elemento #group-progress não encontrado.');
+        toast('⚠️ Erro ao atualizar progresso do grupo.');
     }
 }
 
@@ -440,15 +474,15 @@ function validateForm() {
     }
     if (whatsappError) {
         whatsappError.style.display = isWhatsappValid ? 'none' : 'block';
-        whatsappError.textContent = isWhatsappValid ? '' : 'Insira um WhatsApp válido.';
+        whatsappError.textContent = isWhatsappValid ? '' : 'Insira um WhatsApp válido (DDD + número).';
     }
     if (nameError) {
         nameError.style.display = isNameValid ? 'none' : 'block';
-        nameError.textContent = isNameValid ? '' : 'Insira um nome válido.';
+        nameError.textContent = isNameValid ? '' : 'Insira um nome completo válido.';
     }
     if (dateError) {
         dateError.style.display = (deliveryType === 'event' && !isDateValid) ? 'block' : 'none';
-        dateError.textContent = (deliveryType === 'event' && !isDateValid) ? 'Selecione uma data válida (futura).' : '';
+        dateError.textContent = (deliveryType === 'event' && !isDateValid) ? 'Selecione uma data futura válida.' : '';
     }
 
     confirmBtn.disabled = !(isCepValid && isNumberValid && isWhatsappValid && isNameValid && isStreetValid && isNeighborhoodValid && isCityValid && isStateValid && (deliveryType === 'quick' || isDateValid));
@@ -518,20 +552,26 @@ function startTimer() {
         clearInterval(timerInterval);
     }
     const timerEl = document.getElementById('timer');
-    if (!timerEl) {
-        console.error('Erro: Elemento #timer não encontrado.');
+    const progressBar = document.getElementById('progress-bar');
+    if (!timerEl || !progressBar) {
+        console.error('Erro: Elemento #timer ou #progress-bar não encontrado.');
+        toast('⚠️ Erro ao iniciar o timer.');
         return;
     }
     let timeLeft = 15 * 60;
+    const totalTime = 15 * 60;
     timerEl.textContent = '15:00';
+    progressBar.style.width = '100%';
     timerInterval = setInterval(() => {
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
         timerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        progressBar.style.width = `${(timeLeft / totalTime) * 100}%`;
         timeLeft--;
         if (timeLeft < 0) {
             clearInterval(timerInterval);
             timerEl.textContent = 'Expirado!';
+            progressBar.style.width = '0%';
             toast('⏰ O tempo para a oferta especial acabou! Tente novamente! 😔');
         }
     }, 1000);
@@ -566,6 +606,7 @@ function checkout() {
         toast('⚠️ Selecione um sabor antes de finalizar o pedido!');
         return;
     }
+    state.selectedFlavor = flavorInput.value;
     const sabor = flavorInput.nextElementSibling.textContent.split('(')[0].trim();
     const now = new Date();
     const currentHour = now.getHours();
@@ -589,14 +630,12 @@ function checkout() {
         deliveryNote = `Seu brigadeiro está agendado para ${deliveryDate}! Prepararemos com todo carinho!`;
     }
 
-    let preco = config.pricing.basePrice;
-    if (flavorInput.value === 'branco') {
-        preco += config.pricing.whiteChocolateExtra;
-    }
+    let preco = config.pix[state.selectedFlavor === 'branco' ? 'branco' : 'aoLeite'].price;
+    const pixKey = config.pix[state.selectedFlavor === 'branco' ? 'branco' : 'aoLeite'].pixKey;
+    const pixQrCodeUrl = config.pix[state.selectedFlavor === 'branco' ? 'branco' : 'aoLeite'].pixQrCodeUrl;
     const groupCode = state.group.groupCode || '';
 
     let discountText = `Desconto de 10% (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
-    preco = Number((preco * (1 - config.pricing.standardDiscount)).toFixed(2));
     let groupDiscountApplied = false;
     if (state.group.groupSize >= config.share.groupDiscountThreshold && state.group.privateShared && state.group.publicShared) {
         preco = Number((preco * (1 - config.share.groupDiscountRate)).toFixed(2));
@@ -604,11 +643,11 @@ function checkout() {
         discountText = `Desconto de 10% (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
     }
 
-    const pixKeyDisplay = config.pix.pixKey.length > 10 ? `${config.pix.pixKey.slice(0, 5)}...${config.pix.pixKey.slice(-4)}` : config.pix.pixKey;
+    const pixKeyDisplay = pixKey.length > 10 ? `${pixKey.slice(0, 5)}...${pixKey.slice(-4)}` : pixKey;
 
     const summary = `
         <strong>Resumo do Seu Pedido:</strong><br>
-        • Sabor: ${sabor}${flavorInput.value === 'branco' ? ' (+ R$ 20,00)' : ''}<br>
+        • Sabor: ${sabor}${state.selectedFlavor === 'branco' ? ' (+ R$ 18,00)' : ''}<br>
         • Nome: ${state.name}<br>
         • Endereço: ${state.address.street}, ${state.address.number}, ${state.address.neighborhood}, ${state.address.city} - ${state.address.state}, CEP: ${state.address.cep.replace(/(\d{5})(\d{3})/, '$1-$2')}<br>
         • Frete: Grátis (nossa filial está pertinho, a 2,7 km!)<br>
@@ -630,8 +669,9 @@ function checkout() {
     if (orderSummary && pixKeyText && pixQrCode && confirmationModal && dataModal) {
         orderSummary.innerHTML = summary;
         pixKeyText.textContent = pixKeyDisplay;
-        pixQrCode.src = config.pix.pixQrCodeUrl || 'https://placehold.co/200x200?text=QR+Code+Não+Disponível';
-        pixQrCode.alt = config.pix.pixKey ? `QR Code para pagamento Pix (${pixKeyDisplay})` : 'QR Code não disponível';
+        pixKeyText.setAttribute('aria-live', 'polite');
+        pixQrCode.src = pixQrCodeUrl || 'https://placehold.co/200x200?text=QR+Code+Não+Disponível';
+        pixQrCode.alt = pixKey ? `QR Code para pagamento Pix (${pixKeyDisplay})` : 'QR Code não disponível';
         dataModal.classList.remove('show');
         confirmationModal.classList.add('show');
         pixKeyText.focus();
