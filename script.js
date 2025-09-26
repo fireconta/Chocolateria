@@ -1,13 +1,13 @@
 const config = {
     pricing: {
-        basePrice: 170.91, // Atualizado para refletir o preço base (Ao Leite/54% Cacau)
-        whiteChocolateExtra: 18.00, // Ajustado para manter R$ 188,91 com desconto padrão
+        basePrice: 170.91,
+        whiteChocolateExtra: 18.00,
         standardDiscount: 0.1,
         standardDiscountValue: 18.99,
         groupDiscountValue: 17.09
     },
     stock: {
-        initialStock: 5 // Ajustado para refletir o estoque inicial de 5 unidades
+        initialStock: 5
     },
     share: {
         groupDiscountThreshold: 3,
@@ -65,7 +65,7 @@ const state = {
     whatsapp: '',
     name: '',
     date: '',
-    selectedFlavor: 'ao-leite' // Novo estado para rastrear o sabor selecionado
+    selectedFlavor: 'ao-leite'
 };
 
 let timerInterval = null;
@@ -164,6 +164,7 @@ function closeModal(modalId) {
         modal.classList.remove('show');
         if (modalId === 'confirmation-modal' && timerInterval) {
             clearInterval(timerInterval);
+            timerInterval = null;
         }
     } else {
         console.error(`Erro: Modal ${modalId} não encontrado.`);
@@ -173,7 +174,7 @@ function closeModal(modalId) {
 
 let copyPixKeyTimeout = null;
 function copyPixKey() {
-    if (copyPixKeyTimeout) return; // Debounce
+    if (copyPixKeyTimeout) return;
 
     const pixKeyText = document.getElementById('pix-key-text');
     const copyBtn = document.querySelector('#confirmation-modal .btn[onclick="copyPixKey()"]');
@@ -550,6 +551,7 @@ function confirmData() {
 function startTimer() {
     if (timerInterval) {
         clearInterval(timerInterval);
+        timerInterval = null;
     }
     const timerEl = document.getElementById('timer');
     const progressBar = document.getElementById('progress-bar');
@@ -563,17 +565,19 @@ function startTimer() {
     timerEl.textContent = '15:00';
     progressBar.style.width = '100%';
     timerInterval = setInterval(() => {
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerEl.textContent = 'Expirado!';
+            progressBar.style.width = '0%';
+            toast('⏰ O tempo para a oferta especial acabou! Tente novamente! 😔');
+            return;
+        }
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
         timerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
         progressBar.style.width = `${(timeLeft / totalTime) * 100}%`;
         timeLeft--;
-        if (timeLeft < 0) {
-            clearInterval(timerInterval);
-            timerEl.textContent = 'Expirado!';
-            progressBar.style.width = '0%';
-            toast('⏰ O tempo para a oferta especial acabou! Tente novamente! 😔');
-        }
     }, 1000);
 }
 
@@ -643,8 +647,6 @@ function checkout() {
         discountText = `Desconto de 10% (R$ ${config.pricing.standardDiscountValue.toFixed(2).replace('.', ',')}) + 10% extra (R$ ${config.pricing.groupDiscountValue.toFixed(2).replace('.', ',')}) aplicado!`;
     }
 
-    const pixKeyDisplay = pixKey.length > 10 ? `${pixKey.slice(0, 5)}...${pixKey.slice(-4)}` : pixKey;
-
     const summary = `
         <strong>Resumo do Seu Pedido:</strong><br>
         • Sabor: ${sabor}${state.selectedFlavor === 'branco' ? ' (+ R$ 18,00)' : ''}<br>
@@ -668,10 +670,10 @@ function checkout() {
 
     if (orderSummary && pixKeyText && pixQrCode && confirmationModal && dataModal) {
         orderSummary.innerHTML = summary;
-        pixKeyText.textContent = pixKeyDisplay;
+        pixKeyText.textContent = pixKey; // Exibe a chave Pix completa
         pixKeyText.setAttribute('aria-live', 'polite');
         pixQrCode.src = pixQrCodeUrl || 'https://placehold.co/200x200?text=QR+Code+Não+Disponível';
-        pixQrCode.alt = pixKey ? `QR Code para pagamento Pix (${pixKeyDisplay})` : 'QR Code não disponível';
+        pixQrCode.alt = pixKey ? `QR Code para pagamento Pix` : 'QR Code não disponível';
         dataModal.classList.remove('show');
         confirmationModal.classList.add('show');
         pixKeyText.focus();
