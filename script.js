@@ -17,12 +17,12 @@ const config = {
     pix: {
         aoLeite: {
             price: 170.91,
-            pixKey: "00020101021126360014BR.GOV.BCB.PIX0111123456789005204000053039865406170.915802BR5920Chocolatria LTDA6015Sao Paulo62070503***6304A2B3",
+            pixKey: "00020126830014BR.GOV.BCB.PIX0136a941f5ec-74bf-46e3-9229-ac94121b18a302211x Brigadeiro Gigante5204000053039865406170.915802BR5924Chocolatria LTDA6009SAO PAULO62140510EHDkAua1k263047664",
             pixQrCodeUrl: "Imagens/qrcode170.png"
         },
         branco: {
             price: 188.91,
-            pixKey: "00020101021126360014BR.GOV.BCB.PIX0111123456789015204000053039865406188.915802BR5920Chocolatria LTDA6015Sao Paulo62070503***6304C4D5",
+            pixKey: "00020126970014BR.GOV.BCB.PIX0136a941f5ec-74bf-46e3-9229-ac94121b18a302351x Brigadeiro Gigante Chocolate Bra5204000053039865406188.915802BR5924Chocolatria LTDA6009SAO PAULO62140510kwkFvcDdTf63046ECE",
             pixQrCodeUrl: "Imagens/qrcode188.png"
         }
     },
